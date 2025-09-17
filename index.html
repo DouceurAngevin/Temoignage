@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carrousel de témoignages — /embed</title>
+  <style>
+    :root{
+      --bg: #0b0b0f;
+      --card: #111218;
+      --text: #e9ecf1;
+      --muted: #a9b0bb;
+      --accent: #ffffff; /* flèches blanches (subtiles) */
+      --gap: 20px;       /* espace entre cartes */
+      --peek: 28px;      /* portion visible des cartes adjacentes */
+      --radius: 16px;
+      --shadow: 0 6px 24px rgba(0,0,0,.35);
+      --transition: 600ms cubic-bezier(.22,.61,.36,1);
+    }
+
+    * { box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      display:grid; place-items:center; padding: 32px 12px;
+    }
+
+    .wrap{ width:min(1100px, 100%); }
+    .title{ font-weight:700; letter-spacing:.3px; margin: 0 0 14px; font-size: clamp(18px, 2vw, 22px); color:var(--muted); }
+
+    .carousel{ position:relative; }
+
+    /* La zone visible du carrousel */
+    .viewport{
+      overflow:hidden;
+      /* padding latéral pour laisser entrevoir les cartes voisines */
+      padding: 4px var(--peek);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Piste défilante */
+    .track{
+      display:flex; align-items:stretch; gap: var(--gap);
+      will-change: transform;
+      transition: transform var(--transition);
+      padding: 6px 0; /* respirations verticales */
+    }
+
+    /* Chaque carte témoignage */
+    .card{
+      flex: 0 0 calc((100% - (var(--gap)) - (2 * var(--peek))) / 2);
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 18px 18px;
+      display:flex; flex-direction:column; gap:12px;
+      min-height: 170px;
+    }
+
+    .quote{ font-size: 16px; font-weight: 500; }
+    .meta{ color:var(--muted); font-size: 14px; white-space: pre-line; }
+    .mission{ color:var(--text); opacity:.9; font-size: 14px; }
+
+    /* Boutons de navigation */
+    .nav{
+      position:absolute; top:50%; transform:translateY(-50%);
+      width:36px; height:36px; display:grid; place-items:center;
+      border-radius: 999px; border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(4px);
+      cursor:pointer; user-select:none;
+      transition: background .2s ease, opacity .2s ease;
+      opacity:.85;
+      z-index: 2; /* S'assure que les flèches passent au-dessus */
+    }
+    .nav:hover{ background: rgba(255,255,255,.12); opacity:1; }
+    .prev{ left: 6px; }
+    .next{ right: 6px; }
+    .nav svg{ width:14px; height:14px; color: var(--accent); }
+
+    /* Mobile : 1 par vue, on conserve les "peeks" */
+    @media (max-width: 720px){
+      .card{ flex-basis: calc(100% - (2 * var(--peek))); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="title">Ils nous font confiance</p>
+
+    <div class="carousel" aria-label="Carrousel de témoignages">
+      <button class="nav prev" aria-label="Témoignages précédents">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+
+      <div class="viewport">
+        <div class="track" role="list">
+          <!-- 6 témoignages -->
+          <article class="card" role="listitem">
+            <div class="quote">“On a doublé notre taux de conversion en 8 semaines, sans augmenter le trafic.”</div>
+            <div class="meta">— Responsable e-commerce, Maison Pinet
+→ La mission : audit + réécriture des pages produit</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Clair, net, efficace. Les emails de relance ont relancé… notre croissance.”</div>
+            <div class="meta">— Head of Sales, TechNova
+→ La mission : séquence d’emails + scripts d’appels</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Enfin un messaging qui parle à nos clients industriels — et qui vend.”</div>
+            <div class="meta">— Directeur Commercial, FerraSteel
+→ La mission : positionnement + pages solutions</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Le configurateur est devenu notre meilleur commercial.”</div>
+            <div class="meta">— CEO, Hedonia
+→ La mission : UX copy du configurateur + offres</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Nos appels sont plus courts et concluent plus. Les scripts font la différence.”</div>
+            <div class="meta">— Sales Ops, IndusFlow
+→ La mission : scripts d’appel + objection-handling</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Des textes qui sonnent juste et une ligne éditoriale qui fédère.”</div>
+            <div class="meta">— CMO, Sur La Route Des Saveurs
+→ La mission : charte édito + landing</div>
+          </article>
+        </div>
+      </div>
+
+      <button class="nav next" aria-label="Témoignages suivants">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const viewport = document.querySelector('.viewport');
+      const track = document.querySelector('.track');
+      const prevBtn = document.querySelector('.prev');
+      const nextBtn = document.querySelector('.next');
+
+      // Config
+      const AUTOPLAY_MS = 10000;   // défilement auto toutes les 10s
+      const VISIBLE = window.matchMedia('(max-width: 720px)').matches ? 1 : 2; // 2 sur desktop, 1 sur mobile
+      const STEP = 1; // défile d’une carte à la fois pour plus de fluidité
+
+      // Préparation : dupliquer des éléments aux extrémités pour un loop infini
+      let slides = Array.from(track.children);
+      const cloneHead = slides.slice(0, VISIBLE + 1).map(n => n.cloneNode(true));
+      const cloneTail = slides.slice(-VISIBLE - 1).map(n => n.cloneNode(true));
+      cloneTail.forEach(n => track.insertBefore(n, track.firstChild));
+      cloneHead.forEach(n => track.appendChild(n));
+
+      // Après clonage, re-lister
+      slides = Array.from(track.children);
+
+      // Calculs utilitaires
+      const getPeek = () => parseFloat(getComputedStyle(viewport).paddingLeft) || 0;
+      const getGap = () => parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
+      const cardWidth = () => slides[0].getBoundingClientRect().width; // mêmes largeurs pour toutes
+
+      // Index logique pointant sur la 1ère carte vraiment visible
+      let index = VISIBLE + 1; // on démarre après les clones de tête
+
+      // Positionner la piste sur l’index courant
+      function goTo(i, withTransition = true){
+        const peek = getPeek();
+        const gap = getGap();
+        const x = - (i * (cardWidth() + gap)) + peek; // compense le padding pour aligner
+        if(!withTransition){ track.style.transition = 'none'; }
+        else{ track.style.transition = ''; }
+        track.style.transform = `translate3d(${x}px,0,0)`;
+      }
+
+      // Alignement initial
+      requestAnimationFrame(()=> goTo(index, false));
+
+      // Navigation
+      function next(){
+        index += STEP;
+        goTo(index, true);
+      }
+      function prev(){
+        index -= STEP;
+        goTo(index, true);
+      }
+
+      // Gestion des bords pour la boucle infinie
+      track.addEventListener('transitionend', ()=>{
+        const total = slides.length;
+        // fin → on reboucle vers la vraie 1ère
+        if(index >= total - (VISIBLE + 1)){
+          index = VISIBLE + 1; // saute instantanément
+          goTo(index, false);
+        }
+        // début → on reboucle vers la vraie dernière série
+        if(index <= VISIBLE){
+          index = total - (VISIBLE + 2);
+          goTo(index, false);
+        }
+      });
+
+      // Autoplay
+      let timer = setInterval(next, AUTOPLAY_MS);
+      const resetTimer = () => { clearInterval(timer); timer = setInterval(next, AUTOPLAY_MS); };
+
+      nextBtn.addEventListener('click', ()=>{ next(); resetTimer(); });
+      prevBtn.addEventListener('click', ()=>{ prev(); resetTimer(); });
+
+      // Pause au survol (desktop)
+      ['mouseenter','focusin'].forEach(evt=> viewport.addEventListener(evt, ()=> clearInterval(timer)));
+      ['mouseleave','focusout'].forEach(evt=> viewport.addEventListener(evt, ()=> resetTimer()));
+
+      // Swipe tactile
+      let startX = 0, dx = 0, dragging = false;
+      viewport.addEventListener('pointerdown', (e)=>{ dragging = true; startX = e.clientX; track.style.transition='none'; clearInterval(timer); });
+      window.addEventListener('pointermove', (e)=>{
+        if(!dragging) return; dx = e.clientX - startX; const current = track.style.transform.match(/-?\d+\.?\d*/); const base = current? parseFloat(current[0]) : 0; track.style.transform = `translate3d(${base + dx}px,0,0)`; startX = e.clientX; });
+      window.addEventListener('pointerup', ()=>{
+        if(!dragging) return; dragging=false; track.style.transition='';
+        if(dx < -30) next(); else if(dx > 30) prev(); else goTo(index,true);
+        resetTimer(); dx = 0;
+      });
+
+      // Ré-aligner quand la fenêtre change (simple mais robuste)
+      window.addEventListener('resize', ()=> goTo(index, false));
+    })();
+  </script>
+</body>
+</html>
