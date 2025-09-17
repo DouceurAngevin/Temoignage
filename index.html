@@ -6,84 +6,146 @@
   <title>Carrousel de témoignages — /embed</title>
   <style>
     :root{
-      --bg: #0b0b0f;
-      --card: #111218;
-      --text: #e9ecf1;
-      --muted: #a9b0bb;
-      --accent: #ffffff; /* flèches blanches (subtiles) */
-      --gap: 20px;       /* espace entre cartes */
-      --peek: 28px;      /* portion visible des cartes adjacentes */
+      --bg: #191919;
+      --surface: #202124;
+      --border: rgba(255,255,255,.08);
+      --text: #f6f5f3;
+      --muted: #9fa2a7;
+      --accent: #5b6cf0;
+      --gap: 20px;
+      --peek-limit: 72px;
+      --card-max: 512px;
       --radius: 16px;
-      --shadow: 0 6px 24px rgba(0,0,0,.35);
+      --shadow: 0 18px 48px rgba(0,0,0,.38);
       --transition: 600ms cubic-bezier(.22,.61,.36,1);
+      color-scheme: dark;
     }
 
     * { box-sizing: border-box; }
-    html,body{ height:100%; }
+    html, body { height: 100%; }
+
     body{
-      margin:0; background:var(--bg); color:var(--text);
-      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      display:grid; place-items:center; padding: 32px 12px;
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.6 "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(48px, 8vh, 96px) 24px;
     }
 
-    .wrap{ width:min(1100px, 100%); }
-    .title{ font-weight:700; letter-spacing:.3px; margin: 0 0 14px; font-size: clamp(18px, 2vw, 22px); color:var(--muted); }
+    .wrap{
+      width: min(calc(var(--card-max) + (2 * var(--peek-limit))), 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
 
-    .carousel{ position:relative; }
+    .title{
+      margin: 0;
+      text-align: center;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-size: clamp(13px, 1.2vw, 15px);
+    }
 
-    /* La zone visible du carrousel */
+    .carousel{
+      position: relative;
+      isolation: isolate;
+      --side-padding: clamp(12px, calc((100% - var(--card-max)) / 2), var(--peek-limit));
+    }
+
     .viewport{
-      overflow:hidden;
-      /* padding latéral pour laisser entrevoir les cartes voisines */
-      padding: 4px var(--peek);
+      overflow: hidden;
+      padding: 8px var(--side-padding);
       position: relative;
       z-index: 1;
+      margin: 0 auto;
     }
 
-    /* Piste défilante */
     .track{
-      display:flex; align-items:stretch; gap: var(--gap);
+      display: flex;
+      align-items: stretch;
+      gap: var(--gap);
       will-change: transform;
       transition: transform var(--transition);
-      padding: 6px 0; /* respirations verticales */
+      padding: 12px 0;
     }
 
-    /* Chaque carte témoignage */
     .card{
-      flex: 0 0 calc((100% - (var(--gap)) - (2 * var(--peek))) / 2);
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,.06);
+      flex: 0 0 min(var(--card-max), 100%);
+      width: min(var(--card-max), 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 20px 18px 18px;
-      display:flex; flex-direction:column; gap:12px;
-      min-height: 170px;
+      padding: 22px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 180px;
     }
 
-    .quote{ font-size: 16px; font-weight: 500; }
-    .meta{ color:var(--muted); font-size: 14px; white-space: pre-line; }
-    .mission{ color:var(--text); opacity:.9; font-size: 14px; }
+    .quote{
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: .01em;
+    }
 
-    /* Boutons de navigation */
+    .meta{
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
     .nav{
-      position:absolute; top:50%; transform:translateY(-50%);
-      width:36px; height:36px; display:grid; place-items:center;
-      border-radius: 999px; border: 1px solid rgba(255,255,255,.15);
-      background: rgba(255,255,255,.06);
-      backdrop-filter: blur(4px);
-      cursor:pointer; user-select:none;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(47,52,55,.78);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 10px 30px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      user-select: none;
       transition: background .2s ease, opacity .2s ease;
-      opacity:.85;
-      z-index: 2; /* S'assure que les flèches passent au-dessus */
+      opacity: .9;
+      color: var(--accent);
+      z-index: 2;
     }
-    .nav:hover{ background: rgba(255,255,255,.12); opacity:1; }
-    .prev{ left: 6px; }
-    .next{ right: 6px; }
-    .nav svg{ width:14px; height:14px; color: var(--accent); }
 
-    /* Mobile : 1 par vue, on conserve les "peeks" */
-    @media (max-width: 720px){
-      .card{ flex-basis: calc(100% - (2 * var(--peek))); }
+    .nav:hover{
+      background: rgba(65,70,74,.9);
+      opacity: 1;
+    }
+
+    .prev{ left: max(8px, calc(var(--side-padding) - 32px)); }
+    .next{ right: max(8px, calc(var(--side-padding) - 32px)); }
+    .nav svg{ width: 14px; height: 14px; }
+
+    @media (max-width: 560px){
+      :root{
+        --peek-limit: 54px;
+        --gap: 16px;
+      }
+      body{ padding: 40px 16px; }
+      .quote{ font-size: 16px; }
+      .card{ padding: 20px 20px 18px; }
+    }
+
+    @media (max-width: 380px){
+      .title{ letter-spacing: .08em; }
+      .meta{ font-size: 13px; }
     }
   </style>
 </head>
@@ -98,7 +160,6 @@
 
       <div class="viewport">
         <div class="track" role="list">
-          <!-- 6 témoignages -->
           <article class="card" role="listitem">
             <div class="quote">“On a doublé notre taux de conversion en 8 semaines, sans augmenter le trafic.”</div>
             <div class="meta">— Responsable e-commerce, Maison Pinet
@@ -145,90 +206,93 @@
       const prevBtn = document.querySelector('.prev');
       const nextBtn = document.querySelector('.next');
 
-      // Config
-      const AUTOPLAY_MS = 10000;   // défilement auto toutes les 10s
-      const VISIBLE = window.matchMedia('(max-width: 720px)').matches ? 1 : 2; // 2 sur desktop, 1 sur mobile
-      const STEP = 1; // défile d’une carte à la fois pour plus de fluidité
+      const AUTOPLAY_MS = 10000;
+      const VISIBLE = 1;
+      const STEP = 1;
 
-      // Préparation : dupliquer des éléments aux extrémités pour un loop infini
       let slides = Array.from(track.children);
       const cloneHead = slides.slice(0, VISIBLE + 1).map(n => n.cloneNode(true));
       const cloneTail = slides.slice(-VISIBLE - 1).map(n => n.cloneNode(true));
       cloneTail.forEach(n => track.insertBefore(n, track.firstChild));
       cloneHead.forEach(n => track.appendChild(n));
 
-      // Après clonage, re-lister
       slides = Array.from(track.children);
 
-      // Calculs utilitaires
       const getPeek = () => parseFloat(getComputedStyle(viewport).paddingLeft) || 0;
       const getGap = () => parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
-      const cardWidth = () => slides[0].getBoundingClientRect().width; // mêmes largeurs pour toutes
+      const cardWidth = () => slides[0].getBoundingClientRect().width;
 
-      // Index logique pointant sur la 1ère carte vraiment visible
-      let index = VISIBLE + 1; // on démarre après les clones de tête
+      let index = VISIBLE + 1;
 
-      // Positionner la piste sur l’index courant
       function goTo(i, withTransition = true){
         const peek = getPeek();
         const gap = getGap();
-        const x = - (i * (cardWidth() + gap)) + peek; // compense le padding pour aligner
-        if(!withTransition){ track.style.transition = 'none'; }
-        else{ track.style.transition = ''; }
+        const x = - (i * (cardWidth() + gap)) + peek;
+        track.style.transition = withTransition ? '' : 'none';
         track.style.transform = `translate3d(${x}px,0,0)`;
       }
 
-      // Alignement initial
       requestAnimationFrame(()=> goTo(index, false));
 
-      // Navigation
       function next(){
         index += STEP;
         goTo(index, true);
       }
+
       function prev(){
         index -= STEP;
         goTo(index, true);
       }
 
-      // Gestion des bords pour la boucle infinie
       track.addEventListener('transitionend', ()=>{
         const total = slides.length;
-        // fin → on reboucle vers la vraie 1ère
         if(index >= total - (VISIBLE + 1)){
-          index = VISIBLE + 1; // saute instantanément
+          index = VISIBLE + 1;
           goTo(index, false);
         }
-        // début → on reboucle vers la vraie dernière série
         if(index <= VISIBLE){
           index = total - (VISIBLE + 2);
           goTo(index, false);
         }
       });
 
-      // Autoplay
       let timer = setInterval(next, AUTOPLAY_MS);
       const resetTimer = () => { clearInterval(timer); timer = setInterval(next, AUTOPLAY_MS); };
 
       nextBtn.addEventListener('click', ()=>{ next(); resetTimer(); });
       prevBtn.addEventListener('click', ()=>{ prev(); resetTimer(); });
 
-      // Pause au survol (desktop)
-      ['mouseenter','focusin'].forEach(evt=> viewport.addEventListener(evt, ()=> clearInterval(timer)));
-      ['mouseleave','focusout'].forEach(evt=> viewport.addEventListener(evt, ()=> resetTimer()));
+      ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, ()=> clearInterval(timer)));
+      ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, ()=> resetTimer()));
 
-      // Swipe tactile
       let startX = 0, dx = 0, dragging = false;
-      viewport.addEventListener('pointerdown', (e)=>{ dragging = true; startX = e.clientX; track.style.transition='none'; clearInterval(timer); });
-      window.addEventListener('pointermove', (e)=>{
-        if(!dragging) return; dx = e.clientX - startX; const current = track.style.transform.match(/-?\d+\.?\d*/); const base = current? parseFloat(current[0]) : 0; track.style.transform = `translate3d(${base + dx}px,0,0)`; startX = e.clientX; });
-      window.addEventListener('pointerup', ()=>{
-        if(!dragging) return; dragging=false; track.style.transition='';
-        if(dx < -30) next(); else if(dx > 30) prev(); else goTo(index,true);
-        resetTimer(); dx = 0;
+      viewport.addEventListener('pointerdown', (e)=>{
+        dragging = true;
+        startX = e.clientX;
+        track.style.transition = 'none';
+        clearInterval(timer);
       });
 
-      // Ré-aligner quand la fenêtre change (simple mais robuste)
+      window.addEventListener('pointermove', (e)=>{
+        if(!dragging) return;
+        dx = e.clientX - startX;
+        const current = track.style.transform.match(/-?\d+\.?\d*/);
+        const base = current ? parseFloat(current[0]) : 0;
+        track.style.transform = `translate3d(${base + dx}px,0,0)`;
+        startX = e.clientX;
+      });
+
+      window.addEventListener('pointerup', ()=>{
+        if(!dragging) return;
+        dragging = false;
+        track.style.transition = '';
+        if(dx < -30) next();
+        else if(dx > 30) prev();
+        else goTo(index, true);
+        resetTimer();
+        dx = 0;
+      });
+
       window.addEventListener('resize', ()=> goTo(index, false));
     })();
   </script>
