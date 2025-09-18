@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Carrousel de témoignages — /embed</title>
+  <title>Carrousel de témoignages — /embed (finie, 2 cartes, débords symétriques)</title>
   <style>
     :root{
       --bg: #191919;
@@ -12,14 +12,15 @@
       --text: #f7f6f3;
       --muted: #9b9a97;
       --accent: #f1f1ef;
+
       --gap: 14px;
-      --peek: 32px;                    /* débord symétrique gauche/droite */
+      --peek: 32px;                 /* débord symétrique gauche/droite */
       --radius: 12px;
       --shadow: 0 18px 40px rgba(15,15,15,.55);
       --transition: 600ms cubic-bezier(.22,.61,.36,1);
 
-      /* ⬇️ largeur de carte divisée par 2 (≈ 4 cartes visibles) */
-      --card-width: calc((100% - (3 * var(--gap))) / 4);
+      /* 2 cartes visibles sur desktop */
+      --card-width: calc((100% - var(--gap)) / 2);
 
       color-scheme: dark;
     }
@@ -30,7 +31,7 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font: 16px/1.6 "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      font: 16px/1.6 "Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
       padding: clamp(20px, 4vh, 36px) clamp(16px, 4vw, 28px);
       overflow-x: hidden;
     }
@@ -42,23 +43,15 @@
       gap: 16px;
     }
 
-    .title{
-      margin: 0;
-      text-align: center;
-      font-weight: 600;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-size: clamp(14px, 1.7vw, 15px);
-    }
-
     .carousel{ position: relative; isolation: isolate; }
 
+    /* Débords symétriques : même padding à gauche et à droite */
     .viewport{
       overflow: hidden;
-      padding: 6px var(--peek);        /* débord égal des deux côtés */
+      padding: 6px var(--peek);
       position: relative;
       z-index: 1;
+      touch-action: pan-y;
     }
 
     .track{
@@ -73,7 +66,7 @@
     .card{
       flex: 0 0 var(--card-width);
       background: var(--card);
-      border: 1px solid rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.06);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 18px 18px 16px;
@@ -85,14 +78,13 @@
     .quote{ font-size: 16px; font-weight: 600; letter-spacing: .01em; line-height: 1.55; }
     .meta{ color: var(--muted); font-size: 13px; line-height: 1.5; white-space: pre-line; }
 
+    /* Flèches symétriques */
     .nav{
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
+      width: 34px; height: 34px;
+      display: grid; place-items: center;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,.08);
       background: var(--surface);
@@ -100,8 +92,8 @@
       backdrop-filter: blur(8px);
       cursor: pointer;
       user-select: none;
-      transition: background .2s ease, opacity .2s ease;
-      opacity: .85;
+      transition: background .2s ease, opacity .2s ease, transform .2s ease;
+      opacity: .9;
       z-index: 2;
     }
     .nav:hover{ background: rgba(63,69,72,.85); opacity: 1; }
@@ -109,7 +101,14 @@
     .next{ right: 8px; }
     .nav svg{ width: 14px; height: 14px; color: var(--accent); }
 
-    /* Mobile : 1 carte par vue */
+    /* État désactivé des flèches en bout de piste */
+    .nav[aria-disabled="true"]{
+      opacity: .45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Mobile : 1 carte par vue (toujours débords symétriques) */
     @media (max-width: 600px){
       :root{
         --peek: 18px;
@@ -117,14 +116,9 @@
         --card-width: 100%;
       }
       body{ padding: clamp(18px, 5vh, 24px) 18px clamp(18px, 5vh, 24px); }
-      .wrap{ width: 100%; }
       .card{ min-height: 0; padding: 16px; }
     }
-
-    @media (max-width: 420px){
-      :root{ --peek: 14px; }
-    }
-
+    @media (max-width: 420px){ :root{ --peek: 14px; } }
     @media (max-width: 360px){
       :root{ --peek: 12px; }
       .quote{ font-size: 15px; }
@@ -135,9 +129,11 @@
   <div class="wrap">
     <div class="carousel" aria-label="Carrousel de témoignages">
       <button class="nav prev" aria-label="Témoignages précédents">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
 
+      <!-- Débord symétrique g/d via padding -->
       <div class="viewport">
         <div class="track" role="list">
           <article class="card" role="listitem">
@@ -174,7 +170,8 @@
       </div>
 
       <button class="nav next" aria-label="Témoignages suivants">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
   </div>
@@ -186,89 +183,106 @@
       const prevBtn = document.querySelector('.prev');
       const nextBtn = document.querySelector('.next');
 
-      const AUTOPLAY_MS = 10000;
-      const VISIBLE = 1; // ⬅️ ~4 cartes visibles (avant c'était 1 pour ~2 cartes)
+      const AUTOPLAY_MS = 0;   // 0 = pas d'autoplay (recommandé en carrousel fini)
       const STEP = 1;
 
       let slides = Array.from(track.children);
+      let index = 0; // position de la première carte visible
 
+      // Helpers dimensions
       const getPeek = () => parseFloat(getComputedStyle(viewport).paddingLeft) || 0;
-      const getGap = () => parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
+      const getGap  = () => parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
       const cardWidth = () => slides[0].getBoundingClientRect().width;
 
-      // Clonage pour boucle infinie
-      const cloneHead = slides.slice(0, VISIBLE + 1).map(n => n.cloneNode(true));
-      const cloneTail = slides.slice(-VISIBLE - 1).map(n => n.cloneNode(true));
-      cloneTail.forEach(n => track.insertBefore(n, track.firstChild));
-      cloneHead.forEach(n => track.appendChild(n));
-
-      slides = Array.from(track.children);
-
-      let index = VISIBLE + 1;
-
-      function goTo(i, withTransition = true){
-        const peek = getPeek();
-        const gap = getGap();
-        const x = - (i * (cardWidth() + gap)) + peek;
-        track.style.transition = withTransition ? '' : 'none';
-        track.style.transform = `translate3d(${x}px,0,0)`;
+      // Nombre de cartes visibles (mesuré pour être robuste si styles changent)
+      function getVisible(){
+        const padL = parseFloat(getComputedStyle(viewport).paddingLeft)||0;
+        const padR = parseFloat(getComputedStyle(viewport).paddingRight)||0;
+        const inner = viewport.getBoundingClientRect().width - padL - padR;
+        const w = cardWidth() + getGap();
+        // arrondi au plus proche pour rester stable avec les gaps
+        return Math.max(1, Math.round((inner + getGap()) / w));
       }
 
-      requestAnimationFrame(()=> goTo(index, false));
+      // Dernier index autorisé pour un carrousel FINI
+      function getLastIndex(){
+        return Math.max(0, slides.length - getVisible());
+      }
 
-      function next(){ index += STEP; goTo(index, true); }
-      function prev(){ index -= STEP; goTo(index, true); }
+      // Applique la translation avec débord symétrique
+      function goTo(i, withTransition = true){
+        const max = getLastIndex();
+        index = Math.min(Math.max(0, i), max);
+        const x = - (index * (cardWidth() + getGap())) + getPeek();
+        track.style.transition = withTransition ? '' : 'none';
+        track.style.transform = `translate3d(${x}px,0,0)`;
+        updateArrows();
+      }
 
-      track.addEventListener('transitionend', ()=>{
-        const total = slides.length;
-        if(index >= total - (VISIBLE + 1)){
-          index = VISIBLE + 1;
-          goTo(index, false);
-        }
-        if(index <= VISIBLE){
-          index = total - (VISIBLE + 2);
-          goTo(index, false);
-        }
-      });
+      // Active/désactive les flèches en bout de piste
+      function updateArrows(){
+        const max = getLastIndex();
+        prevBtn.setAttribute('aria-disabled', String(index <= 0));
+        nextBtn.setAttribute('aria-disabled', String(index >= max));
+      }
 
-      let timer = setInterval(next, AUTOPLAY_MS);
-      const resetTimer = () => { clearInterval(timer); timer = setInterval(next, AUTOPLAY_MS); };
+      function next(){ goTo(index + STEP, true); }
+      function prev(){ goTo(index - STEP, true); }
 
-      nextBtn.addEventListener('click', ()=>{ next(); resetTimer(); });
-      prevBtn.addEventListener('click', ()=>{ prev(); resetTimer(); });
+      // Init
+      requestAnimationFrame(()=> goTo(0, false));
 
-      ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, ()=> clearInterval(timer)));
-      ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, ()=> resetTimer()));
+      // Boutons
+      nextBtn.addEventListener('click', next);
+      prevBtn.addEventListener('click', prev);
 
-      let startX = 0, dx = 0, dragging = false;
+      // Drag (horizontal)
+      let startX = 0, dx = 0, dragging = false, baseX = 0;
       viewport.addEventListener('pointerdown', (e)=>{
         dragging = true;
         startX = e.clientX;
         track.style.transition = 'none';
-        clearInterval(timer);
+        // position actuelle extraite du transform
+        const m = track.style.transform.match(/-?\d+\.?\d*/);
+        baseX = m ? parseFloat(m[0]) : 0;
+        viewport.setPointerCapture?.(e.pointerId);
       });
 
       window.addEventListener('pointermove', (e)=>{
         if(!dragging) return;
         dx = e.clientX - startX;
-        const current = track.style.transform.match(/-?\d+\.?\d*/);
-        const base = current ? parseFloat(current[0]) : 0;
-        track.style.transform = `translate3d(${base + dx}px,0,0)`;
-        startX = e.clientX;
+        track.style.transform = `translate3d(${baseX + dx}px,0,0)`;
       });
 
-      window.addEventListener('pointerup', ()=>{
+      window.addEventListener('pointerup', (e)=>{
         if(!dragging) return;
         dragging = false;
-        track.style.transition = '';
-        if(dx < -30) next();
-        else if(dx > 30) prev();
+        // Seuil de swipe
+        const threshold = Math.max(30, cardWidth() * 0.1);
+        if(dx < -threshold) next();
+        else if(dx > threshold) prev();
         else goTo(index, true);
-        resetTimer();
         dx = 0;
+        viewport.releasePointerCapture?.(e.pointerId);
       });
 
+      // Recalage au resize (garde le débord droit identique)
       window.addEventListener('resize', ()=> goTo(index, false));
+
+      // Autoplay (désactivé par défaut pour un carrousel fini)
+      let timer = null;
+      function startAutoplay(){
+        if(!AUTOPLAY_MS) return;
+        stopAutoplay();
+        timer = setInterval(()=>{
+          if(index >= getLastIndex()) { stopAutoplay(); return; }
+          next();
+        }, AUTOPLAY_MS);
+      }
+      function stopAutoplay(){ if(timer){ clearInterval(timer); timer = null; } }
+      startAutoplay();
+      ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, stopAutoplay));
+      ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, startAutoplay));
     })();
   </script>
 </body>
