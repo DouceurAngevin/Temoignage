@@ -3,18 +3,23 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Carrousel — infini, 2 pleines + peeks g/d</title>
+<title>Carrousel — infini, 2 pleines + 1 peek gauche + 1 peek droite</title>
 <style>
   :root{
     --bg:#191919; --surface:#2f3437; --card:#2a2f32; --text:#f7f6f3; --muted:#9b9a97; --accent:#f1f1ef;
+
     --gap:14px;
-    --peek:32px;
+    --peek:32px;                           /* débord symétrique g/d (peeks) */
     --radius:12px;
     --shadow:0 18px 40px rgba(15,15,15,.55);
     --transition:600ms cubic-bezier(.22,.61,.36,1);
+
+    /* 2 cartes pleines visibles en desktop */
     --card-width: calc((100% - var(--gap)) / 2);
+
     color-scheme:dark;
   }
+
   *{ box-sizing:border-box; }
 
   body{
@@ -29,6 +34,7 @@
   .wrap{ width:100%; margin:0 auto; }
   .carousel{ position:relative; isolation:isolate; }
 
+  /* Peeks symétriques via padding L/R identique */
   .viewport{
     overflow:hidden;
     padding:6px var(--peek);
@@ -57,53 +63,79 @@
   .quote{ font-size:16px; font-weight:600; letter-spacing:.01em; line-height:1.55; }
   .meta{ color:var(--muted); font-size:13px; line-height:1.5; white-space:pre-line; }
 
+  /* Flèches hors overflow (toujours visibles) */
   .nav{
-    position:absolute;
-    top:50%;
-    transform:translateY(-50%);
-    width:34px; height:34px;
-    display:grid; place-items:center;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,.08);
-    background:var(--surface);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; display:grid; place-items:center;
+    border-radius:999px; border:1px solid rgba(255,255,255,.08);
+    background:var(--surface); box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
     backdrop-filter:blur(8px);
     cursor:pointer; user-select:none;
     transition: background .2s ease, opacity .2s ease;
     opacity:.95;
-    z-index:1000;         /* Toujours au-dessus de tout */
-    pointer-events:auto;  /* Toujours cliquables */
+    z-index:10;
   }
   .nav:hover{ background:rgba(63,69,72,.85); opacity:1; }
   .prev{ left:8px; }
   .next{ right:8px; }
   .nav svg{ width:14px; height:14px; color:var(--accent); }
 
+  /* Mobile : 1 carte (peeks non garantis si très étroit) */
   @media (max-width:600px){
     :root{ --peek:18px; --gap:12px; --card-width:100%; }
+    body{ padding: clamp(18px,5vh,24px) 18px clamp(18px,5vh,24px); }
     .card{ min-height:0; padding:16px; }
   }
+  @media (max-width:420px){ :root{ --peek:14px; } }
+  @media (max-width:360px){ :root{ --peek:12px; } .quote{ font-size:15px; } }
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="carousel" aria-label="Carrousel de témoignages">
+      <!-- flèche gauche -->
       <button class="nav prev" aria-label="Témoignages précédents">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
 
+      <!-- viewport avec peeks symétriques -->
       <div class="viewport">
         <div class="track" role="list">
-          <article class="card" role="listitem"><div class="quote">“On a doublé notre taux de conversion.”</div></article>
-          <article class="card" role="listitem"><div class="quote">“Les emails de relance ont relancé notre croissance.”</div></article>
-          <article class="card" role="listitem"><div class="quote">“Enfin un messaging qui parle à nos clients.”</div></article>
-          <article class="card" role="listitem"><div class="quote">“Le configurateur est devenu notre meilleur commercial.”</div></article>
-          <article class="card" role="listitem"><div class="quote">“Nos appels concluent plus. Les scripts font la différence.”</div></article>
-          <article class="card" role="listitem"><div class="quote">“Une ligne éditoriale qui fédère.”</div></article>
+          <article class="card" role="listitem">
+            <div class="quote">“On a doublé notre taux de conversion en 8 semaines, sans augmenter le trafic.”</div>
+            <div class="meta">— Responsable e-commerce, Maison Pinet
+→ La mission : audit + réécriture des pages produit</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Clair, net, efficace. Les emails de relance ont relancé… notre croissance.”</div>
+            <div class="meta">— Head of Sales, TechNova
+→ La mission : séquence d’emails + scripts d’appels</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Enfin un messaging qui parle à nos clients industriels — et qui vend.”</div>
+            <div class="meta">— Directeur Commercial, FerraSteel
+→ La mission : positionnement + pages solutions</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Le configurateur est devenu notre meilleur commercial.”</div>
+            <div class="meta">— CEO, Hedonia
+→ La mission : UX copy du configurateur + offres</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Nos appels sont plus courts et concluent plus. Les scripts font la différence.”</div>
+            <div class="meta">— Sales Ops, IndusFlow
+→ La mission : scripts d’appel + objection-handling</div>
+          </article>
+          <article class="card" role="listitem">
+            <div class="quote">“Des textes qui sonnent juste et une ligne éditoriale qui fédère.”</div>
+            <div class="meta">— CMO, Sur La Route Des Saveurs
+→ La mission : charte édito + landing</div>
+          </article>
         </div>
       </div>
 
+      <!-- flèche droite -->
       <button class="nav next" aria-label="Témoignages suivants">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -118,59 +150,123 @@
   const prevBtn = document.querySelector('.prev');
   const nextBtn = document.querySelector('.next');
 
-  const STEP = 1;
-  let slides = Array.from(track.children);
-  let index = 0;
+  const STEP = 1;              // 1 carte par clic
+  const AUTOPLAY_MS = 0;       // mets 10000 si tu veux l’autoplay
 
+  let slides = Array.from(track.children);
+  let index = 0;               // index courant (sur la liste AVEC clones)
+  let timer = null;
+
+  // Helpers
   const css  = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
-  const peek = () => css(viewport,'paddingLeft');
+  const peek = () => css(viewport,'paddingLeft'); // L/R identiques
   const gap  = () => (getComputedStyle(track).columnGap ? css(track,'columnGap') : css(track,'gap'));
   const cardW= () => slides[0]?.getBoundingClientRect().width || 0;
 
+  // Nombre de cartes PLEINES visibles (≈2 en desktop)
   function getVisible(){
     const inner = viewport.getBoundingClientRect().width - css(viewport,'paddingLeft') - css(viewport,'paddingRight');
     const w = cardW() + gap();
-    return Math.max(1, Math.floor((inner+gap()-1)/w));
+    // floor pour éviter de “surcompter” en cas de peeks
+    return Math.max(1, Math.floor( (inner + gap() - 1) / w ));
   }
 
+  // Crée/Reset les clones pour la boucle infinie
   function setupClones(){
+    // supprime anciens clones (tout ce qui n'a pas data-original)
     Array.from(track.children).forEach(n => { if(!n.dataset.original) n.remove(); });
     slides = Array.from(track.children);
-    slides.forEach(n => n.dataset.original='1');
+    slides.forEach(n => n.dataset.original = '1');
 
-    const V = getVisible();
+    const V = Math.max(1, getVisible());  // 2 en desktop
     const head = slides.slice(0, V+1).map(n => { const c=n.cloneNode(true); c.dataset.original=''; return c; });
     const tail = slides.slice(-V-1).map(n => { const c=n.cloneNode(true); c.dataset.original=''; return c; });
+
     tail.forEach(n => track.insertBefore(n, track.firstChild));
     head.forEach(n => track.appendChild(n));
-    slides = Array.from(track.children);
-    index = V+1;
-    requestAnimationFrame(()=> goTo(index,false));
+
+    slides = Array.from(track.children);  // liste avec clones
+
+    // Position de départ : juste après les clones de tête
+    index = V + 1;
+
+    // Place le track pour avoir : 1 peek gauche + 2 pleines + 1 peek droite
+    requestAnimationFrame(()=> goTo(index, false));
   }
 
   function goTo(i, withTransition=true){
-    const x = - (i*(cardW()+gap())) + peek();
+    const x = - (i * (cardW() + gap())) + peek();
     track.style.transition = withTransition ? '' : 'none';
     track.style.transform = `translate3d(${x}px,0,0)`;
     index = i;
   }
 
-  function next(){ goTo(index+STEP,true); }
-  function prev(){ goTo(index-STEP,true); }
+  function next(){ goTo(index + STEP, true); }
+  function prev(){ goTo(index - STEP, true); }
 
+  // Rebouclage silencieux après transition (infini réel)
   track.addEventListener('transitionend', ()=>{
     const total = slides.length;
-    const V = getVisible();
-    if(index >= total-(V+1)) goTo(V+1,false);
-    if(index <= V) goTo(total-(V+2),false);
+    const V = Math.max(1, getVisible());
+
+    // si on est passé dans les clones de droite → on “saute” à la même vue côté original
+    if(index >= total - (V + 1)){
+      goTo(V + 1, false);
+    }
+    // si on est passé dans les clones de gauche → on “saute” à la même vue côté original
+    if(index <= V){
+      goTo(total - (V + 2), false);
+    }
   });
 
-  prevBtn.addEventListener('click', prev);
-  nextBtn.addEventListener('click', next);
+  // Drag (swipe)
+  let startX=0, dx=0, dragging=false, baseX=0;
+  viewport.addEventListener('pointerdown', (e)=>{
+    dragging = true;
+    startX = e.clientX;
+    track.style.transition = 'none';
+    const m = track.style.transform.match(/-?\d+\.?\d*/);
+    baseX = m ? parseFloat(m[0]) : 0;
+    viewport.setPointerCapture?.(e.pointerId);
+    stopAutoplay();
+  });
+  addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    dx = e.clientX - startX;
+    track.style.transform = `translate3d(${baseX + dx}px,0,0)`;
+  });
+  addEventListener('pointerup', (e)=>{
+    if(!dragging) return;
+    dragging = false;
+    const threshold = Math.max(30, cardW()*0.15);
+    if(dx < -threshold) next();
+    else if(dx > threshold) prev();
+    else goTo(index, true);
+    dx = 0;
+    viewport.releasePointerCapture?.(e.pointerId);
+    startAutoplay();
+  });
 
-  window.addEventListener('resize', setupClones);
+  // Autoplay (optionnel)
+  function startAutoplay(){
+    if(!AUTOPLAY_MS) return;
+    stopAutoplay();
+    timer = setInterval(next, AUTOPLAY_MS);
+  }
+  function stopAutoplay(){ if(timer){ clearInterval(timer); timer=null; } }
+  ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, stopAutoplay));
+  ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, startAutoplay));
 
+  // Rebuild clones quand tu changes la taille de l’embed (pour garder 2 pleines + peeks)
+  let resizeRaf=null;
+  addEventListener('resize', ()=>{
+    if(resizeRaf) cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(setupClones);
+  });
+
+  // Init
   setupClones();
+  startAutoplay();
 })();
 </script>
 </body>
