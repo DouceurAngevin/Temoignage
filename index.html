@@ -36,12 +36,13 @@
 
   /* Peeks symétriques via padding L/R identique */
   .viewport{
-    overflow:hidden;
-    padding:6px var(--peek);
-    position:relative;
-    z-index:1;
-    touch-action:pan-y;
-  }
+  overflow:hidden;
+  padding:6px var(--peek);
+  position:relative;
+  z-index:0;            /* 🔽 on baisse le viewport sous les flèches */
+  touch-action:pan-y;
+}
+
 
   .track{
     display:flex; align-items:stretch; gap:var(--gap);
@@ -65,16 +66,26 @@
 
   /* Flèches hors overflow (toujours visibles) */
   .nav{
-    position:absolute; top:50%; transform:translateY(-50%);
-    width:34px; height:34px; display:grid; place-items:center;
-    border-radius:999px; border:1px solid rgba(255,255,255,.08);
-    background:var(--surface); box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
-    backdrop-filter:blur(8px);
-    cursor:pointer; user-select:none;
-    transition: background .2s ease, opacity .2s ease;
-    opacity:.95;
-    z-index:10;
-  }
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:34px; height:34px;
+  display:grid; place-items:center;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.08);
+  background:var(--surface);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+  backdrop-filter:blur(8px);
+  cursor:pointer;
+  user-select:none;
+  transition: background .2s ease, opacity .2s ease;
+  opacity:.95;
+
+  /* ✅ Fix cliquabilité */
+  z-index:9999;           /* toujours au-dessus */
+  pointer-events:auto;    /* capte bien les clics */
+}
+
   .nav:hover{ background:rgba(63,69,72,.85); opacity:1; }
   .prev{ left:8px; }
   .next{ right:8px; }
