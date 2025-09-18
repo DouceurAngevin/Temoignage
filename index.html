@@ -1,139 +1,99 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Carrousel de témoignages — /embed (2 pleines + peeks g/d, fini)</title>
-  <style>
-    :root{
-      --bg: #191919;
-      --surface: #2f3437;
-      --card: #2a2f32;
-      --text: #f7f6f3;
-      --muted: #9b9a97;
-      --accent: #f1f1ef;
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carrousel témoignages — 2 pleines + peeks g/d</title>
+<style>
+  :root{
+    --bg:#191919; --surface:#2f3437; --card:#2a2f32; --text:#f7f6f3; --muted:#9b9a97; --accent:#f1f1ef;
+    --gap:14px;
+    --peek:32px;                  /* débord symétrique gauche/droite */
+    --radius:12px;
+    --shadow:0 18px 40px rgba(15,15,15,.55);
+    --transition:600ms cubic-bezier(.22,.61,.36,1);
+    --card-width:calc((100% - var(--gap)) / 2); /* 2 cartes pleines */
+    color-scheme:dark;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.6 "Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    padding: clamp(20px,4vh,36px) clamp(16px,4vw,28px);
+    overflow-x:hidden;
+  }
+  .wrap{ width:100%; margin:0 auto; }
+  .carousel{ position:relative; isolation:isolate; }
 
-      --gap: 14px;
-      --peek: 32px;                 /* débord symétrique gauche/droite */
-      --radius: 12px;
-      --shadow: 0 18px 40px rgba(15,15,15,.55);
-      --transition: 600ms cubic-bezier(.22,.61,.36,1);
+  /* viewport masque le débord, padding L/R = mêmes peeks */
+  .viewport{
+    overflow:hidden;
+    padding:6px var(--peek);
+    position:relative;
+    z-index:1;
+    touch-action:pan-y;
+  }
+  .track{
+    display:flex; align-items:stretch; gap:var(--gap);
+    will-change:transform;
+    transition: transform var(--transition);
+    padding:8px 0;
+  }
+  .card{
+    flex:0 0 var(--card-width);
+    background:var(--card);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px 18px 16px;
+    display:grid; gap:12px; min-height:150px;
+  }
+  .quote{ font-size:16px; font-weight:600; letter-spacing:.01em; line-height:1.55; }
+  .meta{ color:var(--muted); font-size:13px; line-height:1.5; white-space:pre-line; }
 
-      /* 2 cartes pleines centrées en desktop */
-      --card-width: calc((100% - var(--gap)) / 2);
+  /* Flèches : toujours visibles (hors overflow), z-index fort */
+  .nav{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; display:grid; place-items:center;
+    border-radius:999px; border:1px solid rgba(255,255,255,.08);
+    background:var(--surface); box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+    backdrop-filter:blur(8px);
+    cursor:pointer; user-select:none;
+    transition: background .2s ease, opacity .2s ease;
+    opacity:.95;
+    z-index:10;                 /* ⬅⬅⬅ au-dessus de tout */
+    pointer-events:auto;
+  }
+  .nav:hover{ background:rgba(63,69,72,.85); opacity:1; }
+  .prev{ left:8px; }
+  .next{ right:8px; }
+  .nav svg{ width:14px; height:14px; color:var(--accent); }
 
-      color-scheme: dark;
-    }
+  /* Désactivé = visible mais inactif */
+  .nav[aria-disabled="true"]{
+    opacity:.5; cursor:not-allowed; pointer-events:none;
+  }
 
-    * { box-sizing: border-box; }
-
-    body{
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 16px/1.6 "Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
-      padding: clamp(20px, 4vh, 36px) clamp(16px, 4vw, 28px);
-      overflow-x: hidden;
-    }
-
-    .wrap{
-      width: 100%;
-      margin: 0 auto;
-      display: grid;
-      gap: 16px;
-    }
-
-    .carousel{ position: relative; isolation: isolate; }
-
-    /* Débords symétriques : même padding à gauche et à droite */
-    .viewport{
-      overflow: hidden;
-      padding: 6px var(--peek);
-      position: relative;
-      z-index: 1;
-      touch-action: pan-y;
-    }
-
-    .track{
-      display: flex;
-      align-items: stretch;
-      gap: var(--gap);
-      will-change: transform;
-      transition: transform var(--transition);
-      padding: 8px 0;
-    }
-
-    .card{
-      flex: 0 0 var(--card-width);
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px 18px 16px;
-      display: grid;
-      gap: 12px;
-      min-height: 150px;
-    }
-
-    .quote{ font-size: 16px; font-weight: 600; letter-spacing: .01em; line-height: 1.55; }
-    .meta{ color: var(--muted); font-size: 13px; line-height: 1.5; white-space: pre-line; }
-
-    /* Flèches symétriques toujours visibles (positionnées dans .carousel, pas dans .track) */
-    .nav{
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 34px; height: 34px;
-      display: grid; place-items: center;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: var(--surface);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
-      backdrop-filter: blur(8px);
-      cursor: pointer;
-      user-select: none;
-      transition: background .2s ease, opacity .2s ease;
-      opacity: .9;
-      z-index: 2;
-    }
-    .nav:hover{ background: rgba(63,69,72,.85); opacity: 1; }
-    .prev{ left: 8px; }
-    .next{ right: 8px; }
-    .nav svg{ width: 14px; height: 14px; color: var(--accent); }
-
-    /* État désactivé des flèches en bout logique (reste visible) */
-    .nav[aria-disabled="true"]{
-      opacity: .5;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
-    /* Mobile : on bascule en 1 carte (les “peeks” ne sont plus garantis) */
-    @media (max-width: 600px){
-      :root{
-        --peek: 18px;
-        --gap: 12px;
-        --card-width: 100%;
-      }
-      body{ padding: clamp(18px, 5vh, 24px) 18px clamp(18px, 5vh, 24px); }
-      .card{ min-height: 0; padding: 16px; }
-    }
-    @media (max-width: 420px){ :root{ --peek: 14px; } }
-    @media (max-width: 360px){
-      :root{ --peek: 12px; }
-      .quote{ font-size: 15px; }
-    }
-  </style>
+  /* Mobile : 1 carte (les peeks ne sont pas garantis sur très petit écran) */
+  @media (max-width:600px){
+    :root{ --peek:18px; --gap:12px; --card-width:100%; }
+    body{ padding: clamp(18px,5vh,24px) 18px clamp(18px,5vh,24px); }
+    .card{ min-height:0; padding:16px; }
+  }
+  @media (max-width:420px){ :root{ --peek:14px; } }
+  @media (max-width:360px){ :root{ --peek:12px; } .quote{ font-size:15px; } }
+</style>
 </head>
 <body>
   <div class="wrap">
     <div class="carousel" aria-label="Carrousel de témoignages">
+      <!-- flèche gauche -->
       <button class="nav prev" aria-label="Témoignages précédents">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
 
-      <!-- Débord symétrique g/d via padding -->
+      <!-- zone scrollable avec peeks symétriques -->
       <div class="viewport">
         <div class="track" role="list">
           <article class="card" role="listitem">
@@ -169,6 +129,7 @@
         </div>
       </div>
 
+      <!-- flèche droite (toujours visible, hors overflow) -->
       <button class="nav next" aria-label="Témoignages suivants">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -176,95 +137,98 @@
     </div>
   </div>
 
-  <script>
-    (function(){
-      const viewport = document.querySelector('.viewport');
-      const track = document.querySelector('.track');
-      const prevBtn = document.querySelector('.prev');
-      const nextBtn = document.querySelector('.next');
+<script>
+(function(){
+  const viewport = document.querySelector('.viewport');
+  const track = document.querySelector('.track');
+  const prevBtn = document.querySelector('.prev');
+  const nextBtn = document.querySelector('.next');
 
-      const STEP = 1;
-      const FULL_VISIBLE = 2; // on garantit 2 cartes pleines au centre
+  const STEP = 1;          // 1 carte par clic
+  const TARGET_VISIBLE = 2;// on veut 2 cartes pleines
 
-      let slides = Array.from(track.children);
-      let index = 1; // ⚠️ on commence à 1 pour avoir déjà une carte “coupée” à gauche
+  let slides = Array.from(track.children);
+  let index = 1;           // ⚠️ on démarre à 1 -> peek gauche présent dès le début
 
-      // Helpers dimensions
-      const css = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
-      const peek = () => css(viewport, 'paddingLeft'); // L/R identiques
-      const gap  = () => (getComputedStyle(track).columnGap ? css(track,'columnGap') : css(track,'gap'));
-      const cardW = () => slides[0]?.getBoundingClientRect().width || 0;
+  // Helpers dimensions
+  const css = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
+  const peek = () => css(viewport,'paddingLeft'); // L/R identiques
+  const gap  = () => (getComputedStyle(track).columnGap ? css(track,'columnGap') : css(track,'gap'));
+  const cardW= () => slides[0]?.getBoundingClientRect().width || 0;
 
-      // borne haute = il doit rester au moins 1 carte après les 2 pleines
-      function maxIndex(){
-        // N cartes -> index max = N - FULL_VISIBLE - 1
-        return Math.max(1, slides.length - FULL_VISIBLE - 1);
-      }
+  // Nombre réel visible (2 sur desktop grâce à CSS). On garde calcul pour robustesse.
+  function getVisible(){
+    const inner = viewport.getBoundingClientRect().width - css(viewport,'paddingLeft') - css(viewport,'paddingRight');
+    const w = cardW() + gap();
+    // +gap pour compenser l'espace entre 2 cartes
+    const approx = Math.max(1, Math.round((inner + gap()) / w));
+    return approx; // devrait valoir 2 sur desktop
+  }
 
-      function clampToWindow(i){
-        const min = 1;
-        const max = maxIndex();
-        return Math.min(Math.max(i, min), max);
-      }
+  // Bornes : toujours 1 carte avant + 1 carte après => index ∈ [1, N - VISIBLE - 1]
+  function maxIndex(){
+    const V = Math.max(1, getVisible());
+    return Math.max(1, slides.length - V - 1);
+  }
+  function clampIndex(i){
+    const min = 1, max = maxIndex();
+    return Math.min(Math.max(i, min), max);
+  }
 
-      // Translation : on place la carte [index] en première pleine,
-      // il y a donc (index-1) cartes “complètes” hors écran à gauche
-      function goTo(i, withTransition = true){
-        index = clampToWindow(i);
-        const x = - (index * (cardW() + gap())) + peek();
-        track.style.transition = withTransition ? '' : 'none';
-        track.style.transform = `translate3d(${x}px,0,0)`;
-        updateArrows();
-      }
+  // Applique la translation en respectant le peek symétrique
+  function goTo(i, withTransition=true){
+    index = clampIndex(i);
+    const x = - (index * (cardW() + gap())) + peek();
+    track.style.transition = withTransition ? '' : 'none';
+    track.style.transform = `translate3d(${x}px,0,0)`;
+    updateArrows();
+  }
 
-      function updateArrows(){
-        const min = 1, max = maxIndex();
-        prevBtn.setAttribute('aria-disabled', String(index <= min));
-        nextBtn.setAttribute('aria-disabled', String(index >= max));
-      }
+  function updateArrows(){
+    const min = 1, max = maxIndex();
+    prevBtn.setAttribute('aria-disabled', String(index <= min));
+    nextBtn.setAttribute('aria-disabled', String(index >= max));
+  }
 
-      function next(){ goTo(index + STEP, true); }
-      function prev(){ goTo(index - STEP, true); }
+  function next(){ goTo(index + STEP, true); }
+  function prev(){ goTo(index - STEP, true); }
 
-      // Init : centre logique (index=1) => 1 coupée gauche, 2 pleines, 1 coupée droite
-      requestAnimationFrame(()=> goTo(index, false));
+  // Init : 2 pleines + peeks g/d
+  requestAnimationFrame(()=> goTo(index, false));
 
-      // Boutons
-      nextBtn.addEventListener('click', next);
-      prevBtn.addEventListener('click', prev);
+  // Boutons
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
 
-      // Drag (horizontal)
-      let startX = 0, dx = 0, dragging = false, baseX = 0;
-      viewport.addEventListener('pointerdown', (e)=>{
-        dragging = true;
-        startX = e.clientX;
-        track.style.transition = 'none';
-        const m = track.style.transform.match(/-?\d+\.?\d*/);
-        baseX = m ? parseFloat(m[0]) : 0;
-        viewport.setPointerCapture?.(e.pointerId);
-      });
+  // Drag horizontal
+  let startX=0, dx=0, dragging=false, baseX=0;
+  viewport.addEventListener('pointerdown', (e)=>{
+    dragging = true;
+    startX = e.clientX;
+    track.style.transition = 'none';
+    const m = track.style.transform.match(/-?\d+\.?\d*/);
+    baseX = m ? parseFloat(m[0]) : 0;
+    viewport.setPointerCapture?.(e.pointerId);
+  });
+  addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    dx = e.clientX - startX;
+    track.style.transform = `translate3d(${baseX + dx}px,0,0)`;
+  });
+  addEventListener('pointerup', (e)=>{
+    if(!dragging) return;
+    dragging = false;
+    const threshold = Math.max(30, cardW()*0.15);
+    if(dx < -threshold) next();
+    else if(dx > threshold) prev();
+    else goTo(index, true);
+    dx = 0;
+    viewport.releasePointerCapture?.(e.pointerId);
+  });
 
-      addEventListener('pointermove', (e)=>{
-        if(!dragging) return;
-        dx = e.clientX - startX;
-        track.style.transform = `translate3d(${baseX + dx}px,0,0)`;
-      });
-
-      addEventListener('pointerup', (e)=>{
-        if(!dragging) return;
-        dragging = false;
-        // Seuil de swipe proportionnel
-        const threshold = Math.max(30, cardW() * 0.15);
-        if(dx < -threshold) next();
-        else if(dx > threshold) prev();
-        else goTo(index, true);
-        dx = 0;
-        viewport.releasePointerCapture?.(e.pointerId);
-      });
-
-      // Recalage au resize (utile quand tu ajustes l’embed Notion)
-      addEventListener('resize', ()=> goTo(index, false));
-    })();
-  </script>
+  // Recalage quand tu changes la taille du /embed (Notion)
+  addEventListener('resize', ()=> goTo(index, false));
+})();
+</script>
 </body>
 </html>
