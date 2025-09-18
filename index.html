@@ -1,149 +1,151 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Carrousel de témoignages — /embed</title>
-  <style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carrousel de témoignages — module /embed</title>
+<style>
+  :root{
+    /* Thème */
+    --bg: #191919;
+    --surface: #2f3437;
+    --card: #2a2f32;
+    --text: #f7f6f3;
+    --muted: #9b9a97;
+    --accent: #f1f1ef;
+
+    /* Layout */
+    --peek: 20px;                 /* débord visible à gauche/droite (symétrique) */
+    --gap: 12px;
+    --radius: 12px;
+    --shadow: 0 18px 40px rgba(15,15,15,.45);
+    --transition: 500ms cubic-bezier(.22,.61,.36,1);
+
+    /* Compacité (1 = normal). Mets 0.5 pour ~moitié de hauteur */
+    --compact-scale: 0.5;
+
+    /* Avec 1 carte par vue pour une symétrie parfaite + flèches équidistantes */
+    --card-width: 100%;
+
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 "Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    padding: 8px clamp(10px, 4vw, 20px);
+    overflow-x: hidden;
+  }
+
+  .wrap{
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .carousel{ position: relative; isolation: isolate; }
+
+  /* Le débord est contrôlé par un padding égal des 2 côtés */
+  .viewport{
+    overflow: hidden;
+    padding: 6px var(--peek);
+    position: relative;
+    z-index: 1;
+    touch-action: pan-y;
+  }
+
+  .track{
+    display: flex;
+    align-items: stretch;
+    gap: var(--gap);
+    will-change: transform;
+    transition: transform var(--transition);
+    padding: 6px 0;
+  }
+
+  /* ======= Mode compact (≈ moitié de la hauteur) ======= */
+  .card{
+    /* largeur d’une carte : on reste à 100% pour symétrie gauche/droite parfaite */
+    flex: 0 0 var(--card-width);
+
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: calc(var(--radius) * var(--compact-scale));
+    box-shadow: var(--shadow);
+
+    /* paddings/hauteur réduits */
+    padding: calc(18px * var(--compact-scale)) calc(16px * var(--compact-scale));
+    display: grid;
+    gap: calc(10px * var(--compact-scale));
+    min-height: calc(150px * var(--compact-scale)); /* ≈ 75px quand scale=0.5 */
+  }
+
+  .quote{
+    font-size: calc(16px * var(--compact-scale));
+    font-weight: 700;
+    letter-spacing: .01em;
+    line-height: 1.5;
+  }
+  .meta{
+    color: var(--muted);
+    font-size: calc(13px * var(--compact-scale));
+    line-height: 1.45;
+    white-space: pre-line;
+  }
+
+  /* Flèches parfaitement symétriques des deux côtés */
+  .nav{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: calc(34px * var(--compact-scale));
+    height: calc(34px * var(--compact-scale));
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    user-select: none;
+    transition: background .2s ease, opacity .2s ease, transform .2s ease;
+    opacity: .9;
+    z-index: 2;
+  }
+  .nav:hover{ background: rgba(63,69,72,.85); opacity: 1; }
+  .prev{ left: 8px; }
+  .next{ right: 8px; }
+
+  .nav svg{
+    width: calc(14px * var(--compact-scale));
+    height: calc(14px * var(--compact-scale));
+    color: var(--accent);
+  }
+
+  /* Mobile : on garde la carte unique par vue + compact */
+  @media (max-width: 600px){
     :root{
-      --bg: #191919;
-      --surface: #2f3437;
-      --card: #2a2f32;
-      --text: #f7f6f3;
-      --muted: #9b9a97;
-      --accent: #f1f1ef;
-      --gap: 14px;
-      --peek: 32px;
-      --radius: 12px;
-      --shadow: 0 18px 40px rgba(15,15,15,.55);
-      --transition: 600ms cubic-bezier(.22,.61,.36,1);
-      --card-width: calc((100% - var(--gap)) / 2);
-      --vpad: clamp(20px, 4vh, 36px);
-      color-scheme: dark;
-    }
-
-    * { box-sizing: border-box; }
-
-    body{
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 16px/1.6 "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-      padding: var(--vpad) clamp(16px, 4vw, 28px);
-      overflow-x: hidden;
-    }
-
-    .wrap{
-      width: 100%;
-      margin: 0 auto;
-      display: grid;
-      gap: 16px;
-    }
-
-    .carousel{ position: relative; isolation: isolate; }
-
-    .viewport{
-      overflow: hidden;
-      padding: 6px var(--peek);
-      position: relative;
-      z-index: 1;
-      touch-action: pan-y;
-    }
-
-    .track{
-      display: flex;
-      align-items: stretch;
-      gap: var(--gap);
-      will-change: transform;
-      transition: transform var(--transition);
-      padding: 8px 0;
-    }
-
-    .card{
-      flex: 0 0 var(--card-width);
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,.05);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px 18px 16px;
-      display: grid;
-      gap: 12px;
-      min-height: 150px;
-    }
-
-    .quote{ font-size: 16px; font-weight: 600; letter-spacing: .01em; line-height: 1.55; }
-    .meta{ color: var(--muted); font-size: 13px; line-height: 1.5; white-space: pre-line; }
-
-    .nav{
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: var(--surface);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
-      backdrop-filter: blur(8px);
-      cursor: pointer;
-      user-select: none;
-      transition: background .2s ease, opacity .2s ease;
-      opacity: .85;
-      z-index: 2;
-    }
-
-    .nav:hover{ background: rgba(63,69,72,.85); opacity: 1; }
-    .prev{ left: 8px; }
-    .next{ right: 8px; }
-    .nav svg{ width: 14px; height: 14px; color: var(--accent); }
-
-    /* Mode compact pour iframe (Notion) */
-    .embed-compact body{ --vpad: 10px; }
-    .embed-compact :root{
-      --peek: 12px;
+      --peek: 14px;
       --gap: 10px;
-      --radius: 10px;
-      --card-width: calc((100% - var(--gap)) / 2);
+      --card-width: 100%;
     }
-    .embed-compact .viewport{ padding: 4px var(--peek); }
-    .embed-compact .track{ padding: 6px 0; gap: var(--gap); }
-    .embed-compact .card{
-      padding: 12px;
-      min-height: 88px;
-    }
-    .embed-compact .quote{ font-size: 15px; line-height: 1.45; }
-    .embed-compact .meta{ font-size: 12px; line-height: 1.4; }
-    .embed-compact .nav{ width: 28px; height: 28px; }
-    .embed-compact .nav svg{ width: 12px; height: 12px; }
-
-    @media (max-width: 600px){
-      :root{
-        --peek: 18px;
-        --gap: 12px;
-        --card-width: 100%;
-      }
-      body{ padding: clamp(18px, 5vh, 24px) 18px clamp(18px, 5vh, 24px); }
-      .wrap{ width: 100%; }
-      .card{ min-height: 0; padding: 16px; }
-    }
-    @media (max-width: 420px){
-      :root{ --peek: 14px; }
-    }
-    @media (max-width: 360px){
-      :root{ --peek: 12px; }
-      .quote{ font-size: 15px; }
-    }
-  </style>
+    body{ padding: 8px 12px; }
+  }
+</style>
 </head>
 <body>
   <div class="wrap">
     <div class="carousel" aria-label="Carrousel de témoignages">
       <button class="nav prev" aria-label="Témoignages précédents">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
 
+      <!-- Débord symétrique via padding L/R identique -->
       <div class="viewport">
         <div class="track" role="list">
           <article class="card" role="listitem">
@@ -180,119 +182,116 @@
       </div>
 
       <button class="nav next" aria-label="Témoignages suivants">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
   </div>
 
-  <script>
-    (function(){
-      // Active mode compact si on est dans un iframe (ex: Notion /embed)
-      try {
-        if (window.self !== window.top) {
-          document.documentElement.classList.add('embed-compact');
-        }
-      } catch(e){ document.documentElement.classList.add('embed-compact'); }
+<script>
+(function(){
+  // Mode compact forcé en iframe (Notion) + valeurs par défaut déjà compactes
+  try { if (self !== top) document.documentElement.style.setProperty('--compact-scale','0.5'); }
+  catch(e){ document.documentElement.style.setProperty('--compact-scale','0.5'); }
 
-      const viewport = document.querySelector('.viewport');
-      const track = document.querySelector('.track');
-      const prevBtn = document.querySelector('.prev');
-      const nextBtn = document.querySelector('.next');
+  const viewport = document.querySelector('.viewport');
+  const track = document.querySelector('.track');
+  const prevBtn = document.querySelector('.prev');
+  const nextBtn = document.querySelector('.next');
 
-      const AUTOPLAY_MS = 10000;
-      const STEP = 1;
+  const AUTOPLAY_MS = 9000;
+  const STEP = 1;
 
-      let slides = Array.from(track.children);
+  let slides = Array.from(track.children);
 
-      const getPeek = () => parseFloat(getComputedStyle(viewport).paddingLeft) || 0;
-      const getGap = () => parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
-      const cardWidth = () => slides[0].getBoundingClientRect().width;
-      const getVisible = () => {
-        const inner = viewport.getBoundingClientRect().width - (parseFloat(getComputedStyle(viewport).paddingLeft)||0) - (parseFloat(getComputedStyle(viewport).paddingRight)||0);
-        const w = cardWidth() + getGap();
-        return Math.max(1, Math.round(inner / w));
-      };
+  const css = getComputedStyle(document.documentElement);
+  const getPeek = () => parseFloat(getComputedStyle(viewport).paddingLeft) || 0;
+  const getGap  = () => parseFloat(getComputedStyle(track).gap) || 0;
+  const cardWidth = () => slides[0].getBoundingClientRect().width;
 
-      function addClones(){
-        const VISIBLE = getVisible();
-        const head = slides.slice(0, VISIBLE + 1).map(n => n.cloneNode(true));
-        const tail = slides.slice(-VISIBLE - 1).map(n => n.cloneNode(true));
-        tail.forEach(n => track.insertBefore(n, track.firstChild));
-        head.forEach(n => track.appendChild(n));
-        slides = Array.from(track.children);
-      }
+  // 1 carte par vue pour une vraie symétrie gauche/droite
+  const getVisible = () => 1;
 
-      let index = 0;
-      function goTo(i, withTransition = true){
-        const peek = getPeek();
-        const gap = getGap();
-        const x = - (i * (cardWidth() + gap)) + peek;
-        track.style.transition = withTransition ? '' : 'none';
-        track.style.transform = `translate3d(${x}px,0,0)`;
-        index = i;
-      }
+  // Clones pour boucle infinie
+  function addClones(){
+    const VISIBLE = getVisible();
+    const head = slides.slice(0, VISIBLE + 1).map(n => n.cloneNode(true));
+    const tail = slides.slice(-VISIBLE - 1).map(n => n.cloneNode(true));
+    tail.forEach(n => track.insertBefore(n, track.firstChild));
+    head.forEach(n => track.appendChild(n));
+    slides = Array.from(track.children);
+  }
 
-      addClones();
-      index = getVisible() + 1;
-      requestAnimationFrame(()=> goTo(index, false));
+  let index = 0;
+  function goTo(i, withTransition = true){
+    const peek = getPeek();
+    const gap = getGap();
+    const x = -(i * (cardWidth() + gap)) + peek;
+    track.style.transition = withTransition ? '' : 'none';
+    track.style.transform = `translate3d(${x}px,0,0)`;
+    index = i;
+  }
 
-      function next(){ index += STEP; goTo(index, true); }
-      function prev(){ index -= STEP; goTo(index, true); }
+  addClones();
+  index = getVisible() + 1;       // départ réel (après clones)
+  requestAnimationFrame(()=> goTo(index, false));
 
-      track.addEventListener('transitionend', ()=>{
-        const total = slides.length;
-        const VISIBLE = getVisible();
-        if(index >= total - (VISIBLE + 1)){
-          index = VISIBLE + 1;
-          goTo(index, false);
-        }
-        if(index <= VISIBLE){
-          index = total - (VISIBLE + 2);
-          goTo(index, false);
-        }
-      });
+  function next(){ goTo(++index, true); }
+  function prev(){ goTo(--index, true); }
 
-      let timer = setInterval(next, AUTOPLAY_MS);
-      const resetTimer = () => { clearInterval(timer); timer = setInterval(next, AUTOPLAY_MS); };
+  // Rebouclage
+  track.addEventListener('transitionend', ()=>{
+    const total = slides.length;
+    const VISIBLE = getVisible();
+    if(index >= total - (VISIBLE + 1)){ index = VISIBLE + 1; goTo(index, false); }
+    if(index <= VISIBLE){ index = total - (VISIBLE + 2); goTo(index, false); }
+  });
 
-      nextBtn.addEventListener('click', ()=>{ next(); resetTimer(); });
-      prevBtn.addEventListener('click', ()=>{ prev(); resetTimer(); });
+  // Autoplay
+  let timer = setInterval(next, AUTOPLAY_MS);
+  const resetTimer = () => { clearInterval(timer); timer = setInterval(next, AUTOPLAY_MS); };
 
-      ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, ()=> clearInterval(timer)));
-      ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, ()=> resetTimer()));
+  nextBtn.addEventListener('click', ()=>{ next(); resetTimer(); });
+  prevBtn.addEventListener('click', ()=>{ prev(); resetTimer(); });
 
-      let startX = 0, dx = 0, dragging = false;
-      viewport.addEventListener('pointerdown', (e)=>{
-        dragging = true;
-        startX = e.clientX;
-        track.style.transition = 'none';
-        clearInterval(timer);
-        viewport.setPointerCapture?.(e.pointerId);
-      });
+  // Pause au survol/focus
+  ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, ()=> clearInterval(timer)));
+  ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, ()=> resetTimer()));
 
-      window.addEventListener('pointermove', (e)=>{
-        if(!dragging) return;
-        dx = e.clientX - startX;
-        const current = track.style.transform.match(/-?\d+\.?\d*/);
-        const base = current ? parseFloat(current[0]) : 0;
-        track.style.transform = `translate3d(${base + dx}px,0,0)`;
-        startX = e.clientX;
-      });
+  // Drag
+  let startX = 0, dx = 0, dragging = false;
+  viewport.addEventListener('pointerdown', (e)=>{
+    dragging = true;
+    startX = e.clientX;
+    track.style.transition = 'none';
+    clearInterval(timer);
+    viewport.setPointerCapture?.(e.pointerId);
+  });
 
-      window.addEventListener('pointerup', (e)=>{
-        if(!dragging) return;
-        dragging = false;
-        track.style.transition = '';
-        if(dx < -30) next();
-        else if(dx > 30) prev();
-        else goTo(index, true);
-        resetTimer();
-        dx = 0;
-        viewport.releasePointerCapture?.(e.pointerId);
-      });
+  addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    dx = e.clientX - startX;
+    const current = track.style.transform.match(/-?\d+\.?\d*/);
+    const base = current ? parseFloat(current[0]) : 0;
+    track.style.transform = `translate3d(${base + dx}px,0,0)`;
+    startX = e.clientX;
+  });
 
-      window.addEventListener('resize', ()=> goTo(index, false));
-    })();
-  </script>
+  addEventListener('pointerup', (e)=>{
+    if(!dragging) return;
+    dragging = false;
+    track.style.transition = '';
+    if(dx < -30) next();
+    else if(dx > 30) prev();
+    else goTo(index, true);
+    resetTimer();
+    dx = 0;
+    viewport.releasePointerCapture?.(e.pointerId);
+  });
+
+  // Recalage au resize
+  addEventListener('resize', ()=> goTo(index, false));
+})();
+</script>
 </body>
 </html>
