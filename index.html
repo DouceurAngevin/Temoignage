@@ -18,6 +18,7 @@
       --shadow: 0 18px 40px rgba(15,15,15,.55);
       --transition: 600ms cubic-bezier(.22,.61,.36,1);
       --card-width: calc((100% - var(--gap)) / 2);
+      --vpad: clamp(20px, 4vh, 36px);
       color-scheme: dark;
     }
 
@@ -28,26 +29,15 @@
       background: var(--bg);
       color: var(--text);
       font: 16px/1.6 "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-      padding: clamp(20px, 4vh, 36px) clamp(16px, 4vw, 28px);
+      padding: var(--vpad) clamp(16px, 4vw, 28px);
       overflow-x: hidden;
     }
 
-    /* Conteneur principal : passe à 100% pour s’adapter aux iframes (Notion /embed) */
     .wrap{
       width: 100%;
       margin: 0 auto;
       display: grid;
       gap: 16px;
-    }
-
-    .title{
-      margin: 0;
-      text-align: center;
-      font-weight: 600;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-size: clamp(14px, 1.7vw, 15px);
     }
 
     .carousel{ position: relative; isolation: isolate; }
@@ -57,7 +47,6 @@
       padding: 6px var(--peek);
       position: relative;
       z-index: 1;
-      /* Améliore l’expérience tactile dans un iframe Notion */
       touch-action: pan-y;
     }
 
@@ -110,9 +99,24 @@
     .next{ right: 8px; }
     .nav svg{ width: 14px; height: 14px; color: var(--accent); }
 
-    /* Styles “embed-safe” auto quand la page est dans un iframe */
-    .embed-safe body{ padding: 0 !important; }
-    .embed-safe :root{ --peek: 16px; } /* Réduit le “peek” pour éviter les coupures latérales */
+    /* Mode compact pour iframe (Notion) */
+    .embed-compact body{ --vpad: 10px; }
+    .embed-compact :root{
+      --peek: 12px;
+      --gap: 10px;
+      --radius: 10px;
+      --card-width: calc((100% - var(--gap)) / 2);
+    }
+    .embed-compact .viewport{ padding: 4px var(--peek); }
+    .embed-compact .track{ padding: 6px 0; gap: var(--gap); }
+    .embed-compact .card{
+      padding: 12px;
+      min-height: 88px;
+    }
+    .embed-compact .quote{ font-size: 15px; line-height: 1.45; }
+    .embed-compact .meta{ font-size: 12px; line-height: 1.4; }
+    .embed-compact .nav{ width: 28px; height: 28px; }
+    .embed-compact .nav svg{ width: 12px; height: 12px; }
 
     @media (max-width: 600px){
       :root{
@@ -124,11 +128,9 @@
       .wrap{ width: 100%; }
       .card{ min-height: 0; padding: 16px; }
     }
-
     @media (max-width: 420px){
       :root{ --peek: 14px; }
     }
-
     @media (max-width: 360px){
       :root{ --peek: 12px; }
       .quote{ font-size: 15px; }
@@ -185,13 +187,12 @@
 
   <script>
     (function(){
-      // Détecte l’intégration en iframe (ex. Notion /embed) et applique des styles “embed-safe”
+      // Active mode compact si on est dans un iframe (ex: Notion /embed)
       try {
         if (window.self !== window.top) {
-          document.documentElement.classList.add('embed-safe');
-          document.body.style.padding = '0';
+          document.documentElement.classList.add('embed-compact');
         }
-      } catch(e){ /* cross-origin: on ignore */ }
+      } catch(e){ document.documentElement.classList.add('embed-compact'); }
 
       const viewport = document.querySelector('.viewport');
       const track = document.querySelector('.track');
@@ -203,19 +204,15 @@
 
       let slides = Array.from(track.children);
 
-      // Helpers dimensionnels
       const getPeek = () => parseFloat(getComputedStyle(viewport).paddingLeft) || 0;
       const getGap = () => parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
       const cardWidth = () => slides[0].getBoundingClientRect().width;
-
-      // Nombre de cartes visibles (2 en desktop, 1 en mobile), calculé dynamiquement
       const getVisible = () => {
         const inner = viewport.getBoundingClientRect().width - (parseFloat(getComputedStyle(viewport).paddingLeft)||0) - (parseFloat(getComputedStyle(viewport).paddingRight)||0);
         const w = cardWidth() + getGap();
         return Math.max(1, Math.round(inner / w));
       };
 
-      // Clonage pour boucle infinie
       function addClones(){
         const VISIBLE = getVisible();
         const head = slides.slice(0, VISIBLE + 1).map(n => n.cloneNode(true));
@@ -225,15 +222,6 @@
         slides = Array.from(track.children);
       }
 
-      function removeClones(){
-        // Supprime tous les clones en recréant le contenu initial (plus sûr que tenter de traquer des flags)
-        const originals = slides.slice(getVisible()+1, slides.length - (getVisible()+1)); // intervalle approximatif après clonage
-        track.innerHTML = '';
-        originals.forEach(n => track.appendChild(n.cloneNode(true)));
-        slides = Array.from(track.children);
-      }
-
-      // Positionnement
       let index = 0;
       function goTo(i, withTransition = true){
         const peek = getPeek();
@@ -244,21 +232,12 @@
         index = i;
       }
 
-      // Initialisation
       addClones();
       index = getVisible() + 1;
       requestAnimationFrame(()=> goTo(index, false));
 
-      // Navigation
-      function next(){
-        index += STEP;
-        goTo(index, true);
-      }
-
-      function prev(){
-        index -= STEP;
-        goTo(index, true);
-      }
+      function next(){ index += STEP; goTo(index, true); }
+      function prev(){ index -= STEP; goTo(index, true); }
 
       track.addEventListener('transitionend', ()=>{
         const total = slides.length;
@@ -273,18 +252,15 @@
         }
       });
 
-      // Autoplay
       let timer = setInterval(next, AUTOPLAY_MS);
       const resetTimer = () => { clearInterval(timer); timer = setInterval(next, AUTOPLAY_MS); };
 
       nextBtn.addEventListener('click', ()=>{ next(); resetTimer(); });
       prevBtn.addEventListener('click', ()=>{ prev(); resetTimer(); });
 
-      // Pause au survol / focus
       ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, ()=> clearInterval(timer)));
       ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, ()=> resetTimer()));
 
-      // Drag (pointer)
       let startX = 0, dx = 0, dragging = false;
       viewport.addEventListener('pointerdown', (e)=>{
         dragging = true;
@@ -315,19 +291,7 @@
         viewport.releasePointerCapture?.(e.pointerId);
       });
 
-      // Recalage au resize (et lorsque les MQ changent)
-      let resizeRaf = null;
-      const onResize = ()=>{
-        if(resizeRaf) cancelAnimationFrame(resizeRaf);
-        resizeRaf = requestAnimationFrame(()=>{
-          // Recrée les clones avec le nouveau nombre de cartes visibles
-          removeClones();
-          addClones();
-          index = getVisible() + 1;
-          goTo(index, false);
-        });
-      };
-      window.addEventListener('resize', onResize);
+      window.addEventListener('resize', ()=> goTo(index, false));
     })();
   </script>
 </body>
