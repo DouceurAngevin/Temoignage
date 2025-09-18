@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Carrousel — infini, 2 pleines + 1 peek gauche + 1 peek droite</title>
+<title>Carrousel — infini, 2 pleines + peeks avec fondu</title>
 <style>
   :root{
     --bg:#191919; --surface:#2f3437; --card:#2a2f32; --text:#f7f6f3; --muted:#9b9a97; --accent:#f1f1ef;
 
     --gap:14px;
     --peek:32px;                           /* débord symétrique g/d (peeks) */
+    --fade: calc(var(--peek) * 0.9);       /* largeur du fondu latéral */
     --radius:12px;
     --shadow:0 18px 40px rgba(15,15,15,.55);
     --transition:600ms cubic-bezier(.22,.61,.36,1);
@@ -39,8 +40,42 @@
     overflow:hidden;
     padding:6px var(--peek);
     position:relative;
-    z-index:0;            /* sous les flèches */
+    z-index:0;                 /* sous les flèches */
     touch-action:pan-y;
+
+    /* --- Fondu latéral (mask natif) --- */
+    -webkit-mask-image: linear-gradient(to right,
+      transparent 0,
+      #000 var(--fade),
+      #000 calc(100% - var(--fade)),
+      transparent 100%);
+    mask-image: linear-gradient(to right,
+      transparent 0,
+      #000 var(--fade),
+      #000 calc(100% - var(--fade)),
+      transparent 100%);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  /* Fallback (si mask indisponible) : dégradés overlay */
+  .viewport::before,
+  .viewport::after{
+    content:"";
+    position:absolute;
+    top:0; bottom:0;
+    width: var(--fade);
+    pointer-events:none;  /* ne bloque pas les clics */
+    z-index: 5;           /* au-dessus du contenu, sous les flèches */
+  }
+  .viewport::before{
+    left:0;
+    background: linear-gradient(to right, var(--bg) 0%, rgba(25,25,25,0) 100%);
+  }
+  .viewport::after{
+    right:0;
+    background: linear-gradient(to left, var(--bg) 0%, rgba(25,25,25,0) 100%);
   }
 
   .track{
@@ -63,7 +98,7 @@
   .quote{ font-size:16px; font-weight:600; letter-spacing:.01em; line-height:1.55; }
   .meta{ color:var(--muted); font-size:13px; line-height:1.5; white-space:pre-line; }
 
-  /* Flèches hors overflow (toujours visibles) */
+  /* Flèches hors overflow (toujours visibles & cliquables) */
   .nav{
     position:absolute; top:50%; transform:translateY(-50%);
     width:34px; height:34px; display:grid; place-items:center;
@@ -74,9 +109,8 @@
     transition: background .2s ease, opacity .2s ease;
     opacity:.95;
 
-    /* cliquable au-dessus de tout */
-    z-index:9999;
-    pointer-events:auto;
+    z-index:9999;            /* au-dessus de tout */
+    pointer-events:auto;     /* capte les clics */
   }
   .nav:hover{ background:rgba(63,69,72,.85); opacity:1; }
   .prev{ left:8px; }
@@ -85,12 +119,12 @@
 
   /* Mobile : 1 carte (peeks non garantis si très étroit) */
   @media (max-width:600px){
-    :root{ --peek:18px; --gap:12px; --card-width:100%; }
+    :root{ --peek:18px; --gap:12px; --card-width:100%; --fade:14px; }
     body{ padding: clamp(18px,5vh,24px) 18px clamp(18px,5vh,24px); }
     .card{ min-height:0; padding:16px; }
   }
-  @media (max-width:420px){ :root{ --peek:14px; } }
-  @media (max-width:360px){ :root{ --peek:12px; } .quote{ font-size:15px; } }
+  @media (max-width:420px){ :root{ --peek:14px; --fade:12px; } }
+  @media (max-width:360px){ :root{ --peek:12px; --fade:10px; } .quote{ font-size:15px; } }
 </style>
 </head>
 <body>
@@ -102,7 +136,7 @@
              stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
 
-      <!-- viewport avec peeks symétriques -->
+      <!-- viewport avec peeks + fondu -->
       <div class="viewport">
         <div class="track" role="list">
           <article class="card" role="listitem">
@@ -155,7 +189,7 @@
 
   const STEP = 1;              // 1 carte par clic
   const AUTOPLAY_MS = 0;       // mets 10000 si tu veux l’autoplay
-  const VISIBLE = 2;           // ⬅️ FORCÉ pour garantir 2 pleines + peeks g/d
+  const VISIBLE = 2;           // on force 2 pleines pour garder les peeks g/d
 
   let index = 0;               // index courant (sur la liste AVEC clones)
   let slides = [];
@@ -169,25 +203,23 @@
 
   // Clones pour boucle infinie (marqués data-clone)
   function setupClones(){
-    // supprime anciens clones
+    // supprimer anciens clones
     track.querySelectorAll('[data-clone="1"]').forEach(n => n.remove());
 
-    // récupère les originales
+    // originales
     const originals = Array.from(track.children);
     if(originals.length === 0) return;
 
-    // clone tête et queue
+    // clones tête/queue
     const head = originals.slice(0, VISIBLE + 1).map(n => { const c=n.cloneNode(true); c.dataset.clone='1'; return c; });
     const tail = originals.slice(-VISIBLE - 1).map(n => { const c=n.cloneNode(true); c.dataset.clone='1'; return c; });
 
-    // injecte
     tail.forEach(n => track.insertBefore(n, track.firstChild));
     head.forEach(n => track.appendChild(n));
 
-    // met à jour la liste complète
     slides = Array.from(track.children);
 
-    // point de départ = juste après les clones de gauche
+    // départ = juste après clones gauche → 1 peek gauche + 2 pleines + 1 peek droite
     index = VISIBLE + 1;
     requestAnimationFrame(()=> goTo(index, false));
   }
@@ -202,12 +234,12 @@
   function next(){ goTo(index + STEP, true); }
   function prev(){ goTo(index - STEP, true); }
 
-  // Rebouclage silencieux après transition (infini réel)
+  // Rebouclage silencieux (infini)
   track.addEventListener('transitionend', ()=>{
     const total = slides.length;
     if(total === 0) return;
-    if(index >= total - (VISIBLE + 1)){ goTo(VISIBLE + 1, false); }
-    if(index <= VISIBLE){ goTo(total - (VISIBLE + 2), false); }
+    if(index >= total - (VISIBLE + 1)){ goTo(VISIBLE + 1, false); }     // dépasse à droite → reset
+    if(index <= VISIBLE){ goTo(total - (VISIBLE + 2), false); }         // dépasse à gauche → reset
   });
 
   // Drag (swipe)
@@ -248,7 +280,7 @@
   ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, stopAutoplay));
   ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, startAutoplay));
 
-  // Rebuild clones quand tu changes la taille de l’embed (on garde VISIBLE=2)
+  // Rebuild clones si tu redimensionnes l’embed (on conserve VISIBLE=2)
   let resizeRaf=null;
   addEventListener('resize', ()=>{
     if(resizeRaf) cancelAnimationFrame(resizeRaf);
