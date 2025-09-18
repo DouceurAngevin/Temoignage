@@ -11,12 +11,13 @@
     --gap:14px;
     --peek:32px;                           /* débord symétrique g/d (peeks) */
     --fade: calc(var(--peek) * 0.9);       /* largeur du fondu latéral */
+    --peek-extra: 36px;                    /* ⬅ crée de la place pour la tuile coupée droite & gauche */
     --radius:12px;
     --shadow:0 18px 40px rgba(15,15,15,.55);
     --transition:600ms cubic-bezier(.22,.61,.36,1);
 
-    /* 2 cartes pleines visibles en desktop */
-    --card-width: calc((100% - var(--gap)) / 2);
+    /* 2 cartes pleines visibles (un poil plus étroites pour laisser de la place aux peeks) */
+    --card-width: calc((100% - var(--gap) - var(--peek-extra)) / 2);
 
     color-scheme:dark;
   }
@@ -117,7 +118,7 @@
 
   /* Mobile : 1 carte (peeks non garantis si très étroit) */
   @media (max-width:600px){
-    :root{ --peek:18px; --gap:12px; --card-width:100%; --fade:14px; }
+    :root{ --peek:18px; --gap:12px; --card-width:100%; --fade:14px; --peek-extra: 0px; }
     body{ padding: clamp(18px,5vh,24px) 18px clamp(18px,5vh,24px); }
     .card{ min-height:0; padding:16px; }
   }
@@ -186,18 +187,22 @@
   const AUTOPLAY_MS = 0; // 10000 si tu veux l’autoplay
   const VISIBLE = 2;     // 2 pleines garanties
 
-  // ✅ petit décalage pour forcer une “morsure” à droite
-  const EPS = 1;         // en px (augmente à 2–4 si tu veux un peek plus large)
-
   let index = 0;
   let slides = [];
   let timer = null;
 
   // Helpers
   const css  = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
-  const peek = () => css(viewport,'paddingLeft'); // L/R identiques
+  const padL = () => css(viewport,'paddingLeft');
+  const padR = () => css(viewport,'paddingRight');
+  const peek = () => padL(); // symétrique
   const gap  = () => (getComputedStyle(track).columnGap ? css(track,'columnGap') : css(track,'gap'));
   const cardW= () => slides[0]?.getBoundingClientRect().width || 0;
+  const innerWidth = () => viewport.getBoundingClientRect().width - padL() - padR();
+
+  // Espace “slack” restant après 2 cartes + gap → on le partage à gauche/droite
+  const slack = () => Math.max(0, innerWidth() - (2*cardW() + gap()));
+  const centerOffset = () => slack() / 2;
 
   // Clones (boucle infinie)
   function setupClones(){
@@ -212,12 +217,14 @@
     head.forEach(n => track.appendChild(n));
 
     slides = Array.from(track.children);
-    index = VISIBLE + 1; // départ : 1 coupée gauche + 2 pleines + (avec EPS) 1 coupée droite
+
+    // départ : 1 peek gauche + 2 pleines + 1 peek droite (grâce au centerOffset)
+    index = VISIBLE + 1;
     requestAnimationFrame(()=> goTo(index, false));
   }
 
   function goTo(i, withTransition=true){
-    const x = - (i * (cardW() + gap())) + peek() - EPS; // ⬅️ on mord un poil vers la droite
+    const x = - (i * (cardW() + gap())) + peek() + centerOffset();
     track.style.transition = withTransition ? '' : 'none';
     track.style.transform = `translate3d(${x}px,0,0)`;
     index = i;
@@ -226,7 +233,7 @@
   const next = () => goTo(index + STEP, true);
   const prev = () => goTo(index - STEP, true);
 
-  // Rebouclage silencieux
+  // Rebouclage silencieux (infini)
   track.addEventListener('transitionend', ()=>{
     const total = slides.length;
     if(total === 0) return;
@@ -272,7 +279,7 @@
   ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, stopAutoplay));
   ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, startAutoplay));
 
-  // Rebuild clones au resize (on garde VISIBLE=2 et EPS)
+  // Rebuild clones au resize (on garde VISIBLE=2 et le centrage symétrique)
   let resizeRaf=null;
   addEventListener('resize', ()=>{
     if(resizeRaf) cancelAnimationFrame(resizeRaf);
