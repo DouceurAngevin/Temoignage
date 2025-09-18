@@ -7,19 +7,25 @@
 <style>
   :root{
     --bg:#191919; --surface:#2f3437; --card:#2a2f32; --text:#f7f6f3; --muted:#9b9a97; --accent:#f1f1ef;
+
     --gap:14px;
     --peek:32px;                           /* débord symétrique g/d (peeks) */
     --radius:12px;
     --shadow:0 18px 40px rgba(15,15,15,.55);
     --transition:600ms cubic-bezier(.22,.61,.36,1);
+
     /* 2 cartes pleines visibles en desktop */
     --card-width: calc((100% - var(--gap)) / 2);
+
     color-scheme:dark;
   }
 
   *{ box-sizing:border-box; }
+
   body{
-    margin:0; background:var(--bg); color:var(--text);
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
     font:16px/1.6 "Inter","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
     padding: clamp(20px,4vh,36px) clamp(16px,4vw,28px);
     overflow-x:hidden;
@@ -33,8 +39,9 @@
     overflow:hidden;
     padding:6px var(--peek);
     position:relative;
-    z-index:0;                 /* sous les flèches */
+    z-index:0;                 /* sous les flèches pour garantir les clics */
     touch-action:pan-y;
+    pointer-events:auto;       /* accepte les interactions internes */
   }
 
   .track{
@@ -57,7 +64,7 @@
   .quote{ font-size:16px; font-weight:600; letter-spacing:.01em; line-height:1.55; }
   .meta{ color:var(--muted); font-size:13px; line-height:1.5; white-space:pre-line; }
 
-  /* Flèches hors overflow (toujours visibles) */
+  /* Flèches hors overflow (toujours visibles et cliquables) */
   .nav{
     position:absolute; top:50%; transform:translateY(-50%);
     width:34px; height:34px; display:grid; place-items:center;
@@ -67,8 +74,8 @@
     cursor:pointer; user-select:none;
     transition: background .2s ease, opacity .2s ease;
     opacity:.95;
-    z-index:9999;               /* au-dessus du viewport */
-    pointer-events:auto;
+    z-index:9999;              /* au-dessus de tout dans .carousel */
+    pointer-events:auto;       /* capte bien les clics */
   }
   .nav:hover{ background:rgba(63,69,72,.85); opacity:1; }
   .prev{ left:8px; }
@@ -141,51 +148,49 @@
 <script>
 (function(){
   const viewport = document.querySelector('.viewport');
-  const track = document.querySelector('.track');
-  const prevBtn = document.querySelector('.prev');
-  const nextBtn = document.querySelector('.next');
+  const track    = document.querySelector('.track');
+  const prevBtn  = document.querySelector('.prev');
+  const nextBtn  = document.querySelector('.next');
 
   const STEP = 1;              // 1 carte par clic
   const AUTOPLAY_MS = 0;       // mets 10000 si tu veux l’autoplay
 
   let slides = Array.from(track.children);
-  let index = 0;               // index courant (sur la liste AVEC clones)
-  let timer = null;
+  let index  = 0;              // index courant (sur la liste AVEC clones)
+  let timer  = null;
 
   // Helpers
-  const css  = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
-  const peek = () => css(viewport,'paddingLeft'); // L/R identiques
-  const gap  = () => (getComputedStyle(track).columnGap ? css(track,'columnGap') : css(track,'gap'));
-  const cardW= () => slides[0]?.getBoundingClientRect().width || 0;
+  const css   = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
+  const peek  = () => css(viewport,'paddingLeft'); // L/R identiques
+  const gap   = () => (getComputedStyle(track).columnGap ? css(track,'columnGap') : css(track,'gap'));
+  const cardW = () => slides[0]?.getBoundingClientRect().width || 0;
 
-  // Nombre de cartes PLEINES visibles (≈2 en desktop)
+  // VISIBLE = 2 en desktop, 1 en mobile — garanti via matchMedia (évite les arrondis foireux)
   function getVisible(){
-    const inner = viewport.getBoundingClientRect().width - css(viewport,'paddingLeft') - css(viewport,'paddingRight');
-    const w = cardW() + gap();
-    return Math.max(1, Math.floor( (inner + gap() - 1) / w ));
+    return window.matchMedia('(max-width: 600px)').matches ? 1 : 2;
   }
 
-  // Crée/Reset les clones pour la boucle infinie — CORRIGÉ
+  // Crée/Reset les clones pour la boucle infinie — marqués data-clone="1"
   function setupClones(){
-    // 1) Supprime uniquement les ANCIENS CLONES
+    // 1) Supprime uniquement les anciens clones
     track.querySelectorAll('[data-clone="1"]').forEach(n => n.remove());
 
-    // 2) Liste des originales (sans les clones)
+    // 2) Originaux
     slides = Array.from(track.children);
 
-    // 3) Fabrique de nouveaux clones, marqués data-clone="1"
-    const V = Math.max(1, getVisible());  // 2 en desktop
+    // 3) Clones selon VISIBLE (2 desktop / 1 mobile)
+    const V = getVisible();
     const head = slides.slice(0, V+1).map(n => { const c=n.cloneNode(true); c.dataset.clone='1'; return c; });
     const tail = slides.slice(-V-1).map(n => { const c=n.cloneNode(true); c.dataset.clone='1'; return c; });
 
-    // 4) Injecte clones
+    // 4) Injection clones
     tail.forEach(n => track.insertBefore(n, track.firstChild));
     head.forEach(n => track.appendChild(n));
 
-    // 5) Met à jour la liste (originaux + clones)
+    // 5) Liste complète (originaux + clones)
     slides = Array.from(track.children);
 
-    // 6) Positionne le départ pour obtenir : 1 peek gauche + 2 pleines + 1 peek droite
+    // 6) Position de départ : V+1 ⇒ 1 peek gauche + 2 pleines + 1 peek droite
     index = V + 1;
     requestAnimationFrame(()=> goTo(index, false));
   }
@@ -193,19 +198,19 @@
   function goTo(i, withTransition=true){
     const x = - (i * (cardW() + gap())) + peek();
     track.style.transition = withTransition ? '' : 'none';
-    track.style.transform = `translate3d(${x}px,0,0)`;
+    track.style.transform  = `translate3d(${x}px,0,0)`;
     index = i;
   }
 
   function next(){ goTo(index + STEP, true); }
   function prev(){ goTo(index - STEP, true); }
 
-  // Rebouclage silencieux après transition (infini réel)
+  // Rebouclage silencieux (infini)
   track.addEventListener('transitionend', ()=>{
     const total = slides.length;
-    const V = Math.max(1, getVisible());
+    const V     = getVisible();
     if(index >= total - (V + 1)){ goTo(V + 1, false); }
-    if(index <= V){ goTo(total - (V + 2), false); }
+    if(index <= V){                goTo(total - (V + 2), false); }
   });
 
   // Drag (swipe)
@@ -246,12 +251,16 @@
   ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, stopAutoplay));
   ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, startAutoplay));
 
-  // Rebuild clones quand tu changes la taille de l’embed (garde 2 pleines + peeks)
+  // Rebuild clones quand tu changes la taille de l’embed ou passes le breakpoint
   let resizeRaf=null;
-  addEventListener('resize', ()=>{
+  const rebuild = ()=>{
     if(resizeRaf) cancelAnimationFrame(resizeRaf);
     resizeRaf = requestAnimationFrame(setupClones);
-  });
+  };
+  addEventListener('resize', rebuild);
+  // écoute aussi les changements de MQ
+  const mq = window.matchMedia('(max-width: 600px)');
+  mq.addEventListener ? mq.addEventListener('change', rebuild) : mq.addListener(rebuild);
 
   // Init
   setupClones();
