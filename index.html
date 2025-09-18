@@ -3,24 +3,25 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Carrousel de témoignages — infini, 2 pleines + peeks g/d</title>
+<title>Carrousel — infini, 2 pleines + 1 peek gauche + 1 peek droite</title>
 <style>
   :root{
     --bg:#191919; --surface:#2f3437; --card:#2a2f32; --text:#f7f6f3; --muted:#9b9a97; --accent:#f1f1ef;
 
     --gap:14px;
-    --peek:32px;                       /* débord symétrique gauche/droite */
+    --peek:32px;                           /* débord symétrique g/d (peeks) */
     --radius:12px;
     --shadow:0 18px 40px rgba(15,15,15,.55);
     --transition:600ms cubic-bezier(.22,.61,.36,1);
 
-    /* 2 cartes pleines en desktop */
+    /* 2 cartes pleines visibles en desktop */
     --card-width: calc((100% - var(--gap)) / 2);
 
-    color-scheme: dark;
+    color-scheme:dark;
   }
 
   *{ box-sizing:border-box; }
+
   body{
     margin:0;
     background:var(--bg);
@@ -33,7 +34,7 @@
   .wrap{ width:100%; margin:0 auto; }
   .carousel{ position:relative; isolation:isolate; }
 
-  /* Peeks symétriques grâce au padding L/R identique */
+  /* Peeks symétriques via padding L/R identique */
   .viewport{
     overflow:hidden;
     padding:6px var(--peek);
@@ -44,7 +45,7 @@
 
   .track{
     display:flex; align-items:stretch; gap:var(--gap);
-    will-change: transform;
+    will-change:transform;
     transition: transform var(--transition);
     padding:8px 0;
   }
@@ -62,7 +63,7 @@
   .quote{ font-size:16px; font-weight:600; letter-spacing:.01em; line-height:1.55; }
   .meta{ color:var(--muted); font-size:13px; line-height:1.5; white-space:pre-line; }
 
-  /* Flèches toujours visibles (hors overflow), symétriques */
+  /* Flèches hors overflow (toujours visibles) */
   .nav{
     position:absolute; top:50%; transform:translateY(-50%);
     width:34px; height:34px; display:grid; place-items:center;
@@ -72,14 +73,14 @@
     cursor:pointer; user-select:none;
     transition: background .2s ease, opacity .2s ease;
     opacity:.95;
-    z-index:10; /* au-dessus de la zone masquée */
+    z-index:10;
   }
   .nav:hover{ background:rgba(63,69,72,.85); opacity:1; }
   .prev{ left:8px; }
   .next{ right:8px; }
   .nav svg{ width:14px; height:14px; color:var(--accent); }
 
-  /* Mobile : 1 carte par vue (peeks non garantis sur très petit écran) */
+  /* Mobile : 1 carte (peeks non garantis si très étroit) */
   @media (max-width:600px){
     :root{ --peek:18px; --gap:12px; --card-width:100%; }
     body{ padding: clamp(18px,5vh,24px) 18px clamp(18px,5vh,24px); }
@@ -98,7 +99,7 @@
              stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
 
-      <!-- zone scrollable avec peeks symétriques -->
+      <!-- viewport avec peeks symétriques -->
       <div class="viewport">
         <div class="track" role="list">
           <article class="card" role="listitem">
@@ -150,45 +151,46 @@
   const nextBtn = document.querySelector('.next');
 
   const STEP = 1;              // 1 carte par clic
-  const AUTOPLAY_MS = 10000;   // 0 pour désactiver l’autoplay
+  const AUTOPLAY_MS = 0;       // mets 10000 si tu veux l’autoplay
 
   let slides = Array.from(track.children);
-  let index = 0;               // sera fixé après clonage
+  let index = 0;               // index courant (sur la liste AVEC clones)
   let timer = null;
 
-  // --- helpers dimensions
-  const css = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
+  // Helpers
+  const css  = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
   const peek = () => css(viewport,'paddingLeft'); // L/R identiques
   const gap  = () => (getComputedStyle(track).columnGap ? css(track,'columnGap') : css(track,'gap'));
   const cardW= () => slides[0]?.getBoundingClientRect().width || 0;
 
+  // Nombre de cartes PLEINES visibles (≈2 en desktop)
   function getVisible(){
-    // 2 sur desktop via CSS; on mesure pour rester robuste lors d’un resize d’embed
     const inner = viewport.getBoundingClientRect().width - css(viewport,'paddingLeft') - css(viewport,'paddingRight');
     const w = cardW() + gap();
-    return Math.max(1, Math.round((inner + gap()) / w));
+    // floor pour éviter de “surcompter” en cas de peeks
+    return Math.max(1, Math.floor( (inner + gap() - 1) / w ));
   }
 
-  // --- cloning for infinite loop
+  // Crée/Reset les clones pour la boucle infinie
   function setupClones(){
-    // Nettoyer anciens clones
-    slides.forEach(s => s.dataset._original = s.dataset._original || '1');
-    Array.from(track.children).forEach(n => { if(!n.dataset._original) track.removeChild(n); });
+    // supprime anciens clones (tout ce qui n'a pas data-original)
+    Array.from(track.children).forEach(n => { if(!n.dataset.original) n.remove(); });
+    slides = Array.from(track.children);
+    slides.forEach(n => n.dataset.original = '1');
 
-    slides = Array.from(track.children).filter(n => n.dataset._original === '1');
+    const V = Math.max(1, getVisible());  // 2 en desktop
+    const head = slides.slice(0, V+1).map(n => { const c=n.cloneNode(true); c.dataset.original=''; return c; });
+    const tail = slides.slice(-V-1).map(n => { const c=n.cloneNode(true); c.dataset.original=''; return c; });
 
-    const V = getVisible();            // 2 sur desktop
-    const head = slides.slice(0, V + 1).map(n => { const c=n.cloneNode(true); c.dataset._original=''; return c; });
-    const tail = slides.slice(-V - 1).map(n => { const c=n.cloneNode(true); c.dataset._original=''; return c; });
-
-    // ajouter clones
     tail.forEach(n => track.insertBefore(n, track.firstChild));
     head.forEach(n => track.appendChild(n));
 
-    slides = Array.from(track.children); // inclut clones
+    slides = Array.from(track.children);  // liste avec clones
 
-    // point de départ : juste après la grappe de clones de tête
+    // Position de départ : juste après les clones de tête
     index = V + 1;
+
+    // Place le track pour avoir : 1 peek gauche + 2 pleines + 1 peek droite
     requestAnimationFrame(()=> goTo(index, false));
   }
 
@@ -202,19 +204,22 @@
   function next(){ goTo(index + STEP, true); }
   function prev(){ goTo(index - STEP, true); }
 
-  // Rebouclage dur après transition pour l’infini
+  // Rebouclage silencieux après transition (infini réel)
   track.addEventListener('transitionend', ()=>{
     const total = slides.length;
-    const V = getVisible();
-    if(index >= total - (V + 1)){      // dépassé côté droit → saut discret
+    const V = Math.max(1, getVisible());
+
+    // si on est passé dans les clones de droite → on “saute” à la même vue côté original
+    if(index >= total - (V + 1)){
       goTo(V + 1, false);
     }
-    if(index <= V){                     // dépassé côté gauche → saut discret
+    // si on est passé dans les clones de gauche → on “saute” à la même vue côté original
+    if(index <= V){
       goTo(total - (V + 2), false);
     }
   });
 
-  // Drag
+  // Drag (swipe)
   let startX=0, dx=0, dragging=false, baseX=0;
   viewport.addEventListener('pointerdown', (e)=>{
     dragging = true;
@@ -242,7 +247,7 @@
     startAutoplay();
   });
 
-  // Autoplay
+  // Autoplay (optionnel)
   function startAutoplay(){
     if(!AUTOPLAY_MS) return;
     stopAutoplay();
@@ -252,14 +257,11 @@
   ['mouseenter','focusin'].forEach(evt => viewport.addEventListener(evt, stopAutoplay));
   ['mouseleave','focusout'].forEach(evt => viewport.addEventListener(evt, startAutoplay));
 
-  // Rebuild clones si tu redimensionnes le /embed (cartes/visible changent)
+  // Rebuild clones quand tu changes la taille de l’embed (pour garder 2 pleines + peeks)
   let resizeRaf=null;
   addEventListener('resize', ()=>{
     if(resizeRaf) cancelAnimationFrame(resizeRaf);
-    resizeRaf = requestAnimationFrame(()=>{
-      // mémorise la “position logique” approximative (index relatif dans la zone sans clones)
-      setupClones(); // reconstruit proprement selon le nouveau VISIBLE
-    });
+    resizeRaf = requestAnimationFrame(setupClones);
   });
 
   // Init
